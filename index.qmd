@@ -6,7 +6,9 @@ jyml:
 
 Hi, my name is Seth!
 
-I'm a data scientist living and working in New York City. I've been in the field since 2021, though I've worked in related fields before then.
+I'm a data scientist living and working in New York City.
+
+I've been in the field since 2021, though I've worked in related fields before then.
 
 I am currently on track to finish my Master's in Statistics program at Zicklin School of Business at Baruch College.
 

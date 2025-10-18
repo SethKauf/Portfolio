@@ -8,11 +8,32 @@ Hi, I'm Seth Kaufman, a data scientist living in New York.
 
 I'm currently completing my Master's degree in Statistics with a Data Science focus at Zicklin School of Business at Baruch College.
 
+```{r Baruch_Map[0], echo=FALSE, message=FALSE, warning=FALSE}
+#| echo: false
+#| message: false
+#| warning: false
+
+if(!require("leaflet")){
+  options(repos=c(CRAN="https://cloud.r-project.org"))
+  install.packages("leaflet")
+  stopifnot(require("leaflet"))
+}
+
+baruch_longitude <- -73.98333
+baruch_latitude  <- +40.75028
+
+leaflet() |>
+  addTiles() |>
+  setView(baruch_longitude, baruch_latitude, zoom=17) |>
+  addPopups(baruch_longitude, baruch_latitude, 
+            "I am a Master's student at <b>Baruch College</b>!")
+```
+
 I've always had a love for computers and math, so marrying the two as a data scientist was a no-brainer for me, though it took me a bit to get here.
 
 My education started at SUNY Albany where I received a BA in Political Science in 2018. In 2019 I was working a job that allowed me to start getting more into data analysis. This eventually led me to the [Flatiron School](https://flatironschool.com/), a Data Science bootcamp based in NYC. I've now been working in the data science and analytics field for 4 years since completing Flatiron, with many more to come.
 
-```{r DuoLingo_Streak_Function[0], echo=FALSE, message=FALSE, warning=FALSE}
+```{r DuoLingo_Streak_Function[1], echo=FALSE, message=FALSE, warning=FALSE}
 library(httr2)
 library(jsonlite)
 
