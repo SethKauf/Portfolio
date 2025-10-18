@@ -3,18 +3,29 @@ project:
   output-dir: docs
 
 website:
-  title: Portfolio Website
-  description:
-    My Portfolio Website
+  title: "Seth Kaufman's Portfolio"
+  description: "Landing page for Seth's portfolio, including various projects."
   site-url: "https://SethKauf.github.io/Portfolio/"
   navbar:
     background: primary
     search: false
-    
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "About"
+        href: about.qmd
+    right: 
+      - text: "Research Reports"
+        menu: 
+          - text: "Bias & Variance Tradeoff and BLUE"
+            href: Research_Report_1.qmd
+          - text: "Ensemble Learning Techniques for Fair Classification"
+            href: Research_Report_2.qmd
+
 format:
   html:
     theme: Flatly
     toc: false
-    
+
 editor:
   mode: source
