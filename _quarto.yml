@@ -1,0 +1,20 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: Portfolio Website
+  description:
+    My Portfolio Website
+  site-url: "https://SethKauf.github.io/Portfolio/"
+  navbar:
+    background: primary
+    search: false
+    
+format:
+  html:
+    theme: Flatly
+    toc: false
+    
+editor:
+  mode: source
