@@ -120,7 +120,7 @@ This tells us the date-range that each `district` shapefile corresponds to. The 
 
 > Which states have gained and lost the most seats in the U.S. House of Representatives between 1976 and 2022?
 
-In the U.S., the lower-body of Congress, the U.S. House of Representatives, may have [no-more than 435 total Representatives at any given] time(https://www.house.gov/representatives#:~:text=The%20number%20of%20voting%20representatives,of%20the%20Northern%20Mariana%20Islands.). The number of representatives a state has is proportional to their population. As of the 2022 election, California is the most represented state with 52 representatives, while states like Alaska, Delaware, Vermont, and both of the Dakotas, each have only 1 representative. These numbers are always subject to change, for example, in the 2020 election California had 53 representatives. Below we'll look at the net gain/loss for each state from 1976 through 2022, with a bit of focus on my home state of New York.
+In the U.S., the lower-body of Congress, the U.S. House of Representatives, may have [no-more than 435 total Representatives at any given time](https://www.house.gov/representatives#:~:text=The%20number%20of%20voting%20representatives,of%20the%20Northern%20Mariana%20Islands). The number of representatives a state has is proportional to their population. As of the 2022 election, California is the most represented state with 52 representatives, while states like Alaska, Delaware, Vermont, and both of the Dakotas, each have only 1 representative. These numbers are always subject to change, for example, in the 2020 election California had 53 representatives. Below we'll look at the net gain/loss for each state from 1976 through 2022, with a bit of focus on my home state of New York.
 
 ```{r seats_and_evotes_[3], echo=TRUE, message=FALSE, warning=FALSE}
 #| code-fold: TRUE
@@ -188,7 +188,7 @@ ggplot(state_changes, aes(x = reorder(state, votes_change), y = votes_change, fi
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 ```
-DC is counted as having a representative according to this dataset. [According to DC's website](https://statehood.dc.gov/page/dc-governance#:~:text=DC%20residents%20elect%20a%20non,to%20petition%20Congress%20for%20statehood.&text=District%20residents%20have%20no%20voting%20representation%20in%20the%20House%20of%20Representatives.):
+DC is counted as having a representative according to this dataset. [According to DC's website](https://statehood.dc.gov/page/dc-governance#:~:text=DC%20residents%20elect%20a%20non,to%20petition%20Congress%20for%20statehood.&text=District%20residents%20have%20no%20voting%20representation%20in%20the%20House%20of%20Representatives):
 
 > National Level Representation
 
