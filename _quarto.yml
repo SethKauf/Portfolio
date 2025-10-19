@@ -29,6 +29,8 @@ website:
             href: Applied_Probability_Die_Roll.qmd
           - text: "Electoral College Analysis"
             href: Electoral_Process.qmd
+          - text: "Congestion Pricing Time Series Analysis"
+            href: Congestion_Pricing_TS1.qmd
 
 format:
   html:

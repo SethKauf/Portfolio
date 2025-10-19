@@ -1,5 +1,5 @@
 ---
-title: "Seth's Portfolio"
+title: "Portfolio Page"
 format: html
 jyml:
 ---
@@ -18,9 +18,9 @@ Feel free to browse this page to find:
 
 * About Me
 
-* School Projects and Reports
+* Research Reports
 
-* Personal Projects
+* Data Projects
 
 Please direct all questions to:
 
@@ -28,10 +28,3 @@ Please direct all questions to:
 
 <div class="center-image" style="text-align: center;">
 ![](images/sanfran.jpg)
-
-```{r}
-#| include: false
-1+1
-```
---------------
-Last Updated: `r format(Sys.time(), "%A %m %d, %Y at %H:%M%p")`
