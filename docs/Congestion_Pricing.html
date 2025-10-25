@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Congestion Pricing TimeSeries – Seth Kaufman’s Portfolio</title>
+<title>Congestion_Pricing – Seth Kaufman’s Portfolio</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -68,7 +68,6 @@ ul.task-list li input[type="checkbox"] {
 }</script>
 
 
-<link rel="stylesheet" href="styles.css">
 </head>
 
 <body class="nav-fixed fullcontent">
@@ -153,7 +152,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Congestion Pricing TimeSeries</h1>
+<h1 class="title">Congestion_Pricing</h1>
 </div>
 
 
@@ -170,47 +169,10 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="introduction" class="level1">
-<h1>Introduction</h1>
-<p>For this project, I’ve decided to use New York City Open Data to look at car traffic into Manhattan from January 2020 through June 2025.</p>
-<p>This timespan covers two major events in NYC’s recent history:</p>
-<ul>
-<li>The 2020-21 COVID pandemic</li>
-<li>Congestion Pricing</li>
-</ul>
-<p>In early 2020, the United States along with the rest of the world experienced the COVID Health Pandemic, which caused massive changes and disruptions to the normal, expected flow of life. In terms of vehicle travel, according to the <a href="https://www.bts.gov/covid-19/daily-vehicle-travel">Bureau of Transportation Statistics</a>, we saw a massive dip in vehicle travel for the first few months of the pandemic and stayed below their expected travel baseline until the summer of 2020, only surpassing it regularly in early 2021.</p>
-<div class="center-image" style="text-align: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="images/ts1/BTS_VMT_2020_2021.png" class="img-fluid figure-img"></p>
-<figcaption>Vehicle Travel Trends via the Bureau of Transportation Statistics</figcaption>
-</figure>
-</div>
-</div>
-<p>In early January 2025, New York City enacted <a href="https://www.nytimes.com/2025/01/04/nyregion/congestion-pricing-nyc.html">Congestion Pricing</a>, where vehicles would be tolled for entering Manhattan via car. This toll is $9 during peak period (5AM to 9PM on weekdays) and $2.25 otherwise. The debates over congestion pricing, its enacting and its merits are still ongoing today, the fact remains it’s currently in place, with plans to gradually increase the tolls over the next 6 years until it caps out at $15 in 2031.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>:</p>
-<p>So with two major events related to car-traffic in NYC, what does the data say so far?</p>
-<p>In this project, I look at the overall time trends, then specifically the time trends during what’s considered “Peak” travel hours into NYC. I hope to answer the following in the context of a Time Series problem:</p>
-<ul>
-<li>What does car traffic into Manhattan look like right now?</li>
-<li>Can we forecast what car traffic might look like for the next 365 days?</li>
-</ul>
-</section>
-<section id="nyc-open-data" class="level1">
-<h1>NYC Open Data</h1>
-<p>To answer this question, I’ll be using <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a>, a free public database published by New York City agencies and other partners.</p>
-<p>The dataset Automated Traffic Volume Counts, maintained by the New York City Department of Transportation (NYC DOT) uses Automated Traffic Recorders (ATR) to collect traffic sample volume counts at bridge crossings and roadways.These counts do not cover the entire year, and the number of days counted per location may vary from year to year. <a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
 
 
-</section>
 
-
-<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
-
-<ol>
-<li id="fn1"><p><a href="https://congestionreliefzone.mta.info/tolling">MTA Congestion Pricing Plan</a><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p><a href="https://data.cityofnewyork.us/Transportation/Automated-Traffic-Volume-Counts/7ym2-wayt/about_data">NYC Open Data: Automated Traffic Volume Counts</a><a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-</ol>
-</section></div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {

@@ -1,8 +1,38 @@
 ---
 title: "Congestion Pricing TimeSeries"
 format: html
+css: styles.css
 ---
 
-Project started: October 18, 2025
+# Introduction
 
-Due date: November 2, 2025
+For this project, I've decided to use New York City Open Data to look at car traffic into Manhattan from January 2020 through June 2025.
+
+This timespan covers two major events in NYC's recent history:
+
+* The 2020-21 COVID pandemic
+* Congestion Pricing
+
+In early 2020, the United States along with the rest of the world experienced the COVID Health Pandemic, which caused massive changes and disruptions to the normal, expected flow of life. In terms of vehicle travel, according to the [Bureau of Transportation Statistics](https://www.bts.gov/covid-19/daily-vehicle-travel), we saw a massive dip in vehicle travel for the first few months of the pandemic and stayed below their expected travel baseline until the summer of 2020, only surpassing it regularly in early 2021.
+
+<div class="center-image" style="text-align: center;">
+![Vehicle Travel Trends via the Bureau of Transportation Statistics](images/ts1/BTS_VMT_2020_2021.png)
+</div>
+
+In early January 2025, New York City enacted [Congestion Pricing](https://www.nytimes.com/2025/01/04/nyregion/congestion-pricing-nyc.html), where vehicles would be tolled for entering Manhattan via car. This toll is \$9 during peak period (5AM to 9PM on weekdays) and \$2.25 otherwise. The debates over congestion pricing, its enacting and its merits are still ongoing today, the fact remains it's currently in place, with plans to gradually increase the tolls over the next 6 years until it caps out at \$15 in 2031.[^mta]:
+
+[^mta]: [MTA Congestion Pricing Plan](https://congestionreliefzone.mta.info/tolling)
+
+So with two major events related to car-traffic in NYC, what does the data say so far?
+
+In this project, I look at the overall time trends, then specifically the time trends during what's considered "Peak" travel hours into NYC. I hope to answer the following in the context of a Time Series problem:
+
+* What does car traffic into Manhattan look like right now?
+* Can we forecast what car traffic might look like for the next 365 days?
+
+# NYC Open Data
+To answer this question, I'll be using [NYC Open Data](https://opendata.cityofnewyork.us/), a free public database published by New York City agencies and other partners.
+
+The dataset Automated Traffic Volume Counts, maintained by the New York City Department of Transportation (NYC DOT) uses Automated Traffic Recorders (ATR) to collect traffic sample volume counts at bridge crossings and roadways.These counts do not cover the entire year, and the number of days counted per location may vary from year to year. [^atr]
+
+[^atr]: [NYC Open Data: Automated Traffic Volume Counts](https://data.cityofnewyork.us/Transportation/Automated-Traffic-Volume-Counts/7ym2-wayt/about_data)

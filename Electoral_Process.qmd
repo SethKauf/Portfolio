@@ -1,5 +1,5 @@
 ---
-title: Mini Project 3
+title: Electoral Process Analysis
 format: html
 css: styles.css
 ---
@@ -13,7 +13,7 @@ Figuring out the best way to represent the citizens is an ongoing debate in demo
 
 This project is going to look at some election data from 1976 through 2020 for both the U.S. House of Representatives and the President, before ultimately asking and (lightly) answering if there is a better way to do our current election system for President, which involves delegating votes through [the Electoral College](https://en.wikipedia.org/wiki/United_States_Electoral_College).
 
-# TASK 0
+# Install packages
 This is a package-install if you want to replicate the work
 ```{r install-packages_[0], echo=TRUE, message=FALSE, warning=FALSE}
 if (!require("data.table")) install.packages("data.table")
@@ -67,7 +67,7 @@ head(presidents) |>
 ```
 Not much to see with the data as-is.
 
-# TASK 2: Congressional Boundary Files 1976 to 2012
+# Congressional Boundary Files 1976 to 2012
 We create and use a function to automatically download Congressional Shapefiles [here](https://cdmaps.polisci.ucla.edu/), a UCLA site maintained by Jeffrey B. Lewis, Brandon DeVine, and Lincoln Pritcher with Kenneth C. Martis
 ```{r download_data_[2], echo=TRUE, message=FALSE, warning=FALSE}
 #| code-fold: TRUE
@@ -114,9 +114,9 @@ shapefiles |>
 ```
 This tells us the date-range that each `district` shapefile corresponds to. The number in the filename represents the election cycle for that district. This will be useful for further analysis.
 
-# TASK 3: Exploration of Vote Count Data
+# Exploration of Vote Count Data
 
-## TASK 3.1: Flipped
+## Flipped
 
 > Which states have gained and lost the most seats in the U.S. House of Representatives between 1976 and 2022?
 
@@ -299,7 +299,7 @@ interactive_plot
 ```
 A bit of a busy linegraph because there's 50 States + DC on it, but some interesting trends on it.
 
-## TASK 3.2: Fusion
+## Fusion
 
 > New York State has a unique “fusion” voting system where one candidate can appear on multiple “lines” on the ballot and their vote counts are totaled. For instance, in 2022, Jerrold Nadler appeared on both the Democrat and Working Families party lines for NYS’ 12th Congressional District. He received 200,890 votes total (184,872 as a Democrat and 16,018 as WFP), easily defeating Michael Zumbluskas, who received 44,173 votes across three party lines (Republican, Conservative, and Parent).
 
@@ -450,7 +450,7 @@ house_votes |>
 In Connecticut's 2nd District in 2000, Sam Gejdenson's Democratic party received the most votes, however candidate Rob Simmons on the Independent and Republican ticket won the vote by a razor-thin margin that required votes from both parties
 
 
-## TASK 3.3: Follow You Follow Me
+## Follow You Follow Me
 
 > Do presidential candidates tend to run ahead of or run behind congressional candidates in the same state? That is, does a Democratic candidate for president tend to get more votes in a given state than all Democratic congressional candidates in the same state?
 
@@ -614,7 +614,7 @@ We see that, although it has *somewhat* happened, a district will usually vote t
 Of the 1,189 District + Year combinations in the dataset that voted in both a Congressional race and Presidential race in the same year, 1,171 followed party-lines (had a deviation in total % of vote of less than 35%), while 18 were in a range of 35 - 65%, and none deviated above 65%.
 
 
-# TASK 4: Automate Zip File Extraction
+# Automate Zip File Extraction
 
 Creating a function to automate extracting the zip files in the next task.
 
@@ -630,7 +630,7 @@ read_shp_from_zip <- function(file) {
 }
 ```
 
-# TASK 5: Chloropleth Visualization of the 2000 Presidential Election Electoral College Results
+# Chloropleth Visualization of the 2000 Presidential Election Electoral College Results
 
 Here we create a *Chloropleth Visualization* of the 2000 Presidential Election between candidates Al Gore (D) and George W. Bush (R).
 
@@ -808,7 +808,7 @@ It's interesting to see how different regions voted in this election.
 
 The Northeast (sans New Hampshire), West Coast, and about half of the Midwest went to Vice President Gore, while President-Elect Bush received the other half of the Midwest, most of the Southwest (sans New Mexico), and the Southeast. The non-Continental U.S. split between Bush for Alaska and Gore for Hawaii.
 
-# TASK 6: Advanced Chloropleth Visualization of Electoral College Results
+# Advanced Chloropleth Visualization of Electoral College Results
 
 For this next step, we just want to view the same map as from *Task 5* but for each year of the Presidential cycle.
 
@@ -905,7 +905,7 @@ Some things to work out with this, but it works. A future goal is to add the **w
 
 It is interesting to see how elections don't seem to have any consistency; regions that are deep-Red one year end up deep-Blue the next.
 
-# TASK 7: Evaluating Fairness of ECV Allocation Schemes
+# Evaluating Fairness of ECV Allocation Schemes
 
 > Write a fact check evaluating the fairness of the different ECV electoral allocation schemes.
 
