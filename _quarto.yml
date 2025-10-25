@@ -23,14 +23,14 @@ website:
             href: Research_Report_2.qmd
       - text: "Projects"
         menu:
-          - text: "Home Pricing Prediction Competition"
-            href: Home_Pricing_Competition.qmd
           - text: "Conditional Probability Problem"
             href: Applied_Probability_Die_Roll.qmd
-          - text: "Electoral College Analysis"
-            href: Electoral_Process.qmd
           - text: "Congestion Pricing Time Series Analysis"
             href: Congestion_Pricing_TS1.qmd
+          - text: "Electoral College Analysis"
+            href: Electoral_Process.qmd
+          - text: "Home Pricing Prediction Competition"
+            href: Home_Pricing_Competition.qmd
 
 format:
   html:
