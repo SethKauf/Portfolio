@@ -31,6 +31,8 @@ website:
             href: Electoral_Process.qmd
           - text: "Home Pricing Prediction Competition"
             href: Home_Pricing_Competition.qmd
+          - text: "NHL Shot Attempts Time Series Analysis"
+            href: NHL_Shot_Analysis_TS.qmd
 
 format:
   html:

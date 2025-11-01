@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>About Me – Seth Kaufman’s Portfolio</title>
+<title>NHL Shot Analysis – Seth Kaufman’s Portfolio</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -70,24 +70,54 @@ ul.task-list li input[type="checkbox"] {
 
 <script src="site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
 
+<link href="site_libs/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet">
+
+<script src="site_libs/datatables-binding-0.34.0/datatables.js"></script>
+
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 
-<link href="site_libs/leaflet-1.3.1/leaflet.css" rel="stylesheet">
+<link href="site_libs/dt-core-1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
 
-<script src="site_libs/leaflet-1.3.1/leaflet.js"></script>
+<link href="site_libs/dt-core-1.13.6/css/jquery.dataTables.extra.css" rel="stylesheet">
 
-<link href="site_libs/leafletfix-1.0.0/leafletfix.css" rel="stylesheet">
+<script src="site_libs/dt-core-1.13.6/js/jquery.dataTables.min.js"></script>
 
-<script src="site_libs/proj4-2.6.2/proj4.min.js"></script>
+<link href="site_libs/crosstalk-1.2.2/css/crosstalk.min.css" rel="stylesheet">
 
-<script src="site_libs/Proj4Leaflet-1.0.1/proj4leaflet.js"></script>
-
-<link href="site_libs/rstudio_leaflet-1.3.1/rstudio_leaflet.css" rel="stylesheet">
-
-<script src="site_libs/leaflet-binding-2.2.3/leaflet.js"></script>
+<script src="site_libs/crosstalk-1.2.2/js/crosstalk.min.js"></script>
 
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
 </head>
 
 <body class="nav-fixed fullcontent">
@@ -112,7 +142,7 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./about.html" aria-current="page"> 
+    <a class="nav-link" href="./about.html"> 
 <span class="menu-text">About</span></a>
   </li>  
 </ul>
@@ -176,7 +206,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">About Me</h1>
+<h1 class="title">NHL Shot Analysis</h1>
 </div>
 
 
@@ -193,32 +223,122 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Hi, I’m Seth Kaufman, a data scientist living in New York.</p>
-<p>I’m currently completing my Master’s degree in Statistics with a Data Science focus at Zicklin School of Business at Baruch College.</p>
-<div class="cell">
-<div class="cell-output-display">
-<div class="leaflet html-widget html-fill-item" id="htmlwidget-f04de67a9b7c3b556f26" style="width:100%;height:464px;"></div>
-<script type="application/json" data-for="htmlwidget-f04de67a9b7c3b556f26">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"https://openstreetmap.org/copyright/\">OpenStreetMap<\/a>,  <a href=\"https://opendatacommons.org/licenses/odbl/\">ODbL<\/a>"}]},{"method":"addPopups","args":[40.75028,-73.98333,"I am a Master's student at <b>Baruch College<\/b>!",null,null,{"maxWidth":300,"minWidth":50,"autoPan":true,"keepInView":false,"closeButton":true,"className":""}]}],"setView":[[40.75028,-73.98333],17,[]],"limits":{"lat":[40.75028,40.75028],"lng":[-73.98333,-73.98333]}},"evals":[],"jsHooks":[]}</script>
-</div>
-</div>
-<p>I’ve always had a love for computers and math, so marrying the two as a data scientist was a no-brainer for me, though it took me a bit to get here.</p>
-<p>My education started at SUNY Albany where I received a BA in Political Science in 2018. In 2019 I was working a job that allowed me to start getting more into data analysis. This eventually led me to the <a href="https://flatironschool.com/">Flatiron School</a>, a Data Science bootcamp based in NYC. I’ve now been working in the data science and analytics field for 4 years since completing Flatiron, with many more to come.</p>
-<p>On a more personal level, I love travelling and languages. My wife and I want to see and experience as much of the world as possible, including our honeymoon in Brazil and our recent summer vacation in Italy. English is my native language, though I have a very good working proficiency in Russian and some working proficiency in Hebrew. I am also currently trying to learn some Spanish, Portuguese and Italian on DuoLingo.</p>
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>My current DuoLingo streak is 2,337 days!</code></pre>
-</div>
-</div>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>A popular sport in both North America and Europe, ice hockey is considered one of the fastest and most difficult team games to play.</p>
+<p>In North America, the largest ice hockey league is the <em>National Hockey League</em> or <em>NHL</em>. It is a league comprised of 32 teams, 25 in the U.S. and 7 in Canada, all of whom compete each year to lift what some consider the greatest trophy in sports, the Stanley Cup.</p>
 <div class="center-image" style="text-align: center;">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="images/georgia.jpg" class="img-fluid figure-img"></p>
-<figcaption>2024 Trip to Savannah, GA</figcaption>
+<p><img src="images/ts1/barkov_cup_lift.png" class="img-fluid figure-img"></p>
+<figcaption>Panthers captain Aleksander Barkov lifts Cup in 2024, via AP News</figcaption>
 </figure>
 </div>
-
-
 </div>
+<p>The basic rules of hockey are as follows:</p>
+<ul>
+<li>Each team can have a maximum of 5 players plus a goaltender on the ice at any given time
+<ul>
+<li>This can change based on whether a team has taken a penalty (infraction), or has pulled their goaltender for an extra attacked</li>
+</ul></li>
+<li>You win by scoring more goals than the other team
+<ul>
+<li>A goal is when the puck, the small black object made of vulcanized rubber, crosses the goal line and into the net</li>
+<li>There is an exception to this rule in the regular season, you can win in a shootout, which doesn’t count as a goal</li>
+</ul></li>
+</ul>
+<div class="center-image" style="text-align: center;">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/ts1/martinook_playoff_save.png" class="img-fluid figure-img"></p>
+<figcaption>Hurricanes forward Jordan Martinook keeping the puck out of the net in the 2024 playoffs, via SportsNet on YouTube</figcaption>
+</figure>
+</div>
+</div>
+</section>
+<section id="goals-and-shot-attempts" class="level1">
+<h1>Goals and Shot Attempts</h1>
+<p>So, how does a team score a goal?</p>
+<p>The most standard way is to take a shot from somewhere, most often in the offensive/attacking zone. When a player takes a shot, it registers as a <em>shot attempt</em> (<em>SA</em>). When a shot attempt is placed on net, it counts as a <em>shot on goal</em> (<em>SoG</em>), and when it goes into the goal, it’s counted as a <em>goal</em> or <em>goal for</em> (<em>GF</em>).</p>
+<p>The first <em>gif</em> below shows a shot attempt that is also a shot on goal and a goal for.</p>
+<figure style="text-align: center;" class="figure">
+<img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExemNpbW5yaHl0ejhycmE1dDJzeWp5ZHlndHZtdHM5OXd4NmtxMGNzaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/22DTizzirZseyvTn2t/giphy.gif" alt="Weber Slapshot" class="figure-img">
+<figcaption>
+A shot attempt, a shot on goal and a goal for. Credit anonymous on Giphy
+</figcaption>
+</figure>
+<p>The second <em>gif</em> shows a shot attempt that was blocked by a defender and is therefore only a shot attempt, not a shot on goal.</p>
+<figure style="text-align: center;" class="figure">
+<img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExZWpubm82Nmo2dHZrMDQwNGJmc3huODh2a2htNm5xOXRwdmhqNG5xMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/13eFj2I8TE3YY/giphy.gif" alt="Landeskog Wristshot" class="figure-img">
+<figcaption>
+A shot attempt, but not a shot on goal. Credit <span class="citation" data-cites="hockeyplayersclub">@hockeyplayersclub</span> on Giphy
+</figcaption>
+</figure>
+</section>
+<section id="project-motivation" class="level1">
+<h1>Project Motivation</h1>
+<p>Any fan of the NHL might have heard the term <em>shot attempt</em>, especially from the last few years, as broadcasting networks such as <em>ESPN</em> have talked about them <em>ad nauseum</em> as a be-all-end-all offensive statistic.</p>
+<p>As a New York Rangers fan, I especially began to notice the term being used in reference to the Carolina Hurricanes, a team whom the Rangers have played twice in the playoffs in the past 3 years (2022 and 2024). The Hurricanes would frequently have double or triple the number of shot attempts that the Rangers would have, however…</p>
+<figure style="text-align:center; padding:10px; border-radius:8px;" class="figure">
+<img src="images/ts1/Rangers_2022_Win.png" height="200px" style="margin-right:10px;" class="figure-img"> <img src="images/ts1/Rangers_2024_Win.png" height="200px" class="figure-img">
+<figcaption style="color:black; font-style:italic; margin-top:8px;">
+Sorry not sorry, Hurricanes fans (credit SportsNet on YouTube)
+</figcaption>
+</figure>
+<p>However, neither the Rangers nor the Hurricanes were the primary motivation for this analysis. It’s actually the Florida Panthers, the current reigning back-to-back Stanley Cup champions.</p>
+<p>The Florida Panthers have made the Stanley Cup Final for the past 3 years, losing the first year to Vegas, then winning the past two against Edmonton both times. After making the Final for the third consecutive season by beating the Carolina Hurricanes in the Eastern Conference Final in 5 games, Hurricanes coach Rod Brind’Amour said <a href="https://www.sportsnet.ca/nhl/video/hurricanes-brindamour-sees-panthers-style-of-play-as-the-standard/">“[The Florida Panthers] are the standard”</a>.</p>
+<p>The Panthers are a team that prides itself on a two-way game, being effective in all-three zones. In the offensive zone, that includes getting shots to the net. The NHL is a copycat league, as are most in the sports world. This leads me to analyzing Shot Attempts as a metric and trying to forecast shot attempts throughout the year in a standard, 82 game regular season.</p>
+</section>
+<section id="data" class="level1">
+<h1>Data</h1>
+<p>To analyze this, I used <a href="https://moneypuck.com/data.htm">MonkeyPuck.com data</a>. Specifically, their game data which has tracked NHL games since the 2008 season.</p>
+<p>For this project, I will only look at data from the 2021 season (which began on October 12, 2021) through the beginning of the 2025 (current) season, with the most recent data as of October 28, 2025, excluding all playoffs.</p>
+<p>The reasons for this specific stratification are:</p>
+<ul>
+<li>This is reasonably recent data</li>
+<li>The 2021-22 season is when the NHL expanded to its current number of 32 teams with the addition of the <code>Seattle Kraken</code></li>
+<li>This was the first full-length, 82 game season following the 2020-21 COVID Pandemic
+<ul>
+<li>Each season has been 82 regular season games for each team</li>
+</ul></li>
+<li>All 32 teams played 82 games in the 4 seasons of training data (<span class="math inline">\(32 \times 82 \times 4 = 10,496\)</span> total games)
+<ul>
+<li>Each team has played a minimum of <span class="math inline">\(8\)</span> games in the 2025 season which can be used as testing data for Time Series forecasting</li>
+</ul></li>
+</ul>
+<section id="raw-data" class="level2">
+<h2 class="anchored" data-anchor-id="raw-data">Raw Data</h2>
+<p>The below data has been filtered and had some renaming done for visual purposes, but is more-or-less the raw data that was pulled from MoneyPuck.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div class="datatables html-widget html-fill-item" id="htmlwidget-091a242e5d6bcfa35c96" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-091a242e5d6bcfa35c96">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["Detroit Red Wings","New York Rangers","Carolina Hurricanes","Florida Panthers","Minnesota Wild","Utah Mammoth"],[2021,2021,2023,2023,2025,2025],[2021021201,2021021201,2023020205,2023020205,2025020131,2025020131],["2022-04-16","2022-04-16","2023-11-10","2023-11-10","2025-10-25","2025-10-25"],[37,68,69,60,75,62]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Team<\/th>\n      <th>Season<\/th>\n      <th>Game_ID<\/th>\n      <th>Date<\/th>\n      <th>ShotAttempts_For<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"tip","df":6,"pageLength":6,"columnDefs":[{"className":"dt-right","targets":[2,3,5]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"Team","targets":1},{"name":"Season","targets":2},{"name":"Game_ID","targets":3},{"name":"Date","targets":4},{"name":"ShotAttempts_For","targets":5}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[6,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+<section id="data-preprocessing" class="level2">
+<h2 class="anchored" data-anchor-id="data-preprocessing">Data Preprocessing</h2>
+<p>For the temporal component of this analysis, I aggregated all of the <code>ShotAttempts_For</code> for each team across each <code>game_number</code>.</p>
+<p>What this means is, for each team’s game 1, or game 2, 3… 82 (e.g.: <span class="math inline">\(gameNumber \in [1-82]\)</span>), we take the average of all 32 teams in each season and count that.</p>
+<p>So as an example, below we see the first game of each season (excluding 2025 since it’s not included in the training data) for the <em>Los Angeles Kings</em>:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div class="datatables html-widget html-fill-item" id="htmlwidget-5091596e0a75672c2c6b" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-5091596e0a75672c2c6b">{"x":{"filter":"none","vertical":false,"caption":"<caption style=\"caption-side: bottom; text-align: left;\">LAK — Game 1 detail by season, with summary mean/SD row<\/caption>","data":[["LA Kings","LA Kings","LA Kings","LA Kings","LA Kings"],["2021","2022","2023","2024","Summary"],["2021-10-14","2022-10-11","2023-10-11","2024-10-10",null],[84,56,73,48,null],[null,null,null,null,65.2],[null,null,null,null,16.3]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Team<\/th>\n      <th>Season<\/th>\n      <th>Date<\/th>\n      <th>ShotAttempts_For<\/th>\n      <th>Mean_ShotAttempts_For<\/th>\n      <th>StDev_ShotAttempts_For<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"tip","pageLength":5,"columnDefs":[{"className":"dt-right","targets":[3,4,5]},{"name":"Team","targets":0},{"name":"Season","targets":1},{"name":"Date","targets":2},{"name":"ShotAttempts_For","targets":3},{"name":"Mean_ShotAttempts_For","targets":4},{"name":"StDev_ShotAttempts_For","targets":5}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[5,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+<p>So, across the four <span class="math inline">\(GameNumber=1\)</span> for the <em>Los Angeles Kings</em>, <span class="math inline">\(\mu\approx65.2\)</span> and <span class="math inline">\(\sigma\approx16.3\)</span>.</p>
+<p>Doing this for every team, then averaging those values, we get the following:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div class="datatables html-widget html-fill-item" id="htmlwidget-180d9165683e9e111860" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-180d9165683e9e111860">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5"],[1,24,55,81,82],[60.17,58.52,60.12,58.5,57.82],[12.21,12.1,11.51,12.96,11.81],[128,128,128,128,128]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Game_Number<\/th>\n      <th>Avg_ShotAttempts_For<\/th>\n      <th>StDev_ShotAttempts_For<\/th>\n      <th>Number_of_Observations<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"tip","pageLength":5,"columnDefs":[{"className":"dt-right","targets":[1,2,3,4]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"Game_Number","targets":1},{"name":"Avg_ShotAttempts_For","targets":2},{"name":"StDev_ShotAttempts_For","targets":3},{"name":"Number_of_Observations","targets":4}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[5,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+
+
+</section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

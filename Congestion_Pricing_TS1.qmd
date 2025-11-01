@@ -4,6 +4,12 @@ format: html
 css: styles.css
 ---
 
+# Note
+
+As of October 24th, 2025 I found bad data in the main dataset that made me switch gears.
+
+I'll try to pick up on this once I either find better data or get clarity from New York Open Data.
+
 # Introduction
 
 For this project, I've decided to use New York City Open Data to look at car traffic into Manhattan from January 2020 through June 2025.
@@ -23,7 +29,7 @@ In early January 2025, New York City enacted [Congestion Pricing](https://www.ny
 
 [^mta]: [MTA Congestion Pricing Plan](https://congestionreliefzone.mta.info/tolling)
 
-So with two major events related to car-traffic in NYC, what does the data say so far?
+So, with two major events related to car-traffic in NYC, what does the data say so far?
 
 In this project, I look at the overall time trends, then specifically the time trends during what's considered "Peak" travel hours into NYC. I hope to answer the following in the context of a Time Series problem:
 
@@ -33,6 +39,281 @@ In this project, I look at the overall time trends, then specifically the time t
 # NYC Open Data
 To answer this question, I'll be using [NYC Open Data](https://opendata.cityofnewyork.us/), a free public database published by New York City agencies and other partners.
 
-The dataset Automated Traffic Volume Counts, maintained by the New York City Department of Transportation (NYC DOT) uses Automated Traffic Recorders (ATR) to collect traffic sample volume counts at bridge crossings and roadways.These counts do not cover the entire year, and the number of days counted per location may vary from year to year. [^atr]
+The dataset Automated Traffic Volume Counts, maintained by the New York City Department of Transportation (NYC DOT) uses Automated Traffic Recorders (ATR) to collect traffic sample volume counts at bridge crossings and roadways. These counts do not cover the entire year, and the number of days counted per location may vary from year to year. [^atr]
 
 [^atr]: [NYC Open Data: Automated Traffic Volume Counts](https://data.cityofnewyork.us/Transportation/Automated-Traffic-Volume-Counts/7ym2-wayt/about_data)
+
+## Data Dictionary
+The overall dataset spans from early February 2020 through late June 2025, is updated regularly (last update `September 20, 2025`) and contains `1.84M` records and 14 columns: 
+
+| Column Name | Column Description | Term, Acronym, or Code Definitions | Additional Notes |
+|--------------|--------------------|------------------------------------|------------------|
+| **RequestID** | A unique ID that is generated for each counts request. |  |  |
+| **boro** | Lists which of the five administrative divisions of New York City the location is within, written as a word. |  | Brooklyn<br>Bronx<br>Manhattan<br>Staten Island<br>Queens |
+| **yr** | The two-digit year portion of the date when the count was conducted. |  |  |
+| **m** | The two-digit month portion of the date when the count was conducted. |  |  |
+| **d** | The two-digit day portion of the date when the count was conducted. |  |  |
+| **hh** | The two-digit hour portion of the time when the count was conducted. |  |  |
+| **mm** | The two-digit start-minute portion of the time when the count was conducted. |  |  |
+| **vol** | The total sum of count collected within a 15-minute increment. |  |  |
+| **segmentId** | The ID that identifies each segment of a street in the LION street network version 14. |  |  |
+| **WktGeom** | A text markup language for representing vector geometry objects on a map and spatial reference systems of spatial objects. |  |  |
+| **street** | The 'On Street' where the count took place. |  |  |
+| **fromSt** | The 'From Street' where the count took place. |  |  |
+| **toSt** | The 'To Street' where the count took place. |  |  |
+| **direction** | The text-based direction of traffic where the count took place. |  | NB = Northbound<br>SB = Southbound<br>EB = Eastbound<br>WB = Westbound<br>NS = North/South<br>EW = East/West |
+
+## Data Inspection
+
+Below is a sample of the raw data, pulling with parameters
+
+```{r traffic_data_read[1], echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+# packages
+if (!require("dplyr")) install.packages("dplyr")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("lubridate")) install.packages("lubridate")
+if (!require("RSocrata")) install.packages("RSocrata")
+if (!require("scales")) install.packages("scales")
+if (!require("sf")) install.packages("sf")
+if (!require("stringr")) install.packages("stringr")
+
+#libraries
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(RSocrata)
+library(scales)
+library(sf)
+library(stringr)
+
+# set API key
+Sys.setenv(NYC_OD_KEY=readLines(".secrets"))
+
+endpoint <- "https://data.cityofnewyork.us/resource/7ym2-wayt.json" # traffic data
+
+# query to pull only Manhattan data
+qry <- paste0(
+  endpoint,
+  "?$select=*",
+  "&$where=boro='Manhattan' AND yr >= 2020",
+  "&$order=yr,m,d,hh,mm"
+)
+
+# read query
+#traffic_raw <- read.socrata(qry)
+
+#### for project pull ####
+traffic_raw <- read.csv("data/TS1/traffic_data.csv")
+
+# display raw data
+head(traffic_raw,3) |>
+  DT::datatable(options=list(
+    dom='tip',
+    traffic_raw=3
+    ))
+```
+
+## Limitations
+As noted by NYC DOT:
+
+>These counts do not cover the entire year, and the number of days counted per location may vary from year to year.
+
+What this means is that if we were to try and count the data usage across the whole city, we'd only be getting partial snapshots for various locations at various points in time.
+
+```{r distinct_values[2], echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+
+# get the location points for just below 60th street
+locs <- traffic_raw |>
+  distinct(boro, street, fromst, tost, wktgeom)
+
+pts <- st_as_sf(
+  locs,
+  wkt="wktgeom",
+  crs=2263
+) |>
+  st_transform(4326)
+
+xy <- st_coordinates(pts)
+pts$lon <- xy[,1]
+pts$lat <- xy[,2]
+
+lat_60th <- 40.7681
+
+cpz_geo <- pts |>
+  filter(
+    boro == "Manhattan",
+    lat <= lat_60th,
+    between(lon, -74.03, -73.93)  # west/east bounds of Manhattan
+  )
+
+# exclude streets that are in the exempt zones of Manhattan
+exclude_re <- "(?i)\\bFDR\\b|F\\.D\\.R|FRANKLIN D ROOSEVELT|WEST SIDE|HENRY HUDSON|ROUTE\\s*9A|\\b9A\\b|\\bWEST ST\\b|WEST STREET|HUGH L\\.? CAREY|BROOKLYN\\s*-?\\s*BATTERY|BATTERY TUNNEL"
+
+cpz_clean <- cpz_geo |>
+  filter(
+    !str_detect(coalesce(street, ""),  exclude_re),
+    !str_detect(coalesce(fromst, ""),  exclude_re),
+    !str_detect(coalesce(tost,  ""),   exclude_re)
+  )
+
+df <- traffic_raw |>
+  semi_join(st_drop_geometry(cpz_clean),
+            by = c("boro", "street", "fromst", "tost"))
+
+traffic_raw |>
+  group_by(street) |>
+  count(name="Value Counts") |>
+  mutate(street = str_to_title(street)) |>
+  rename(Street = street) |>
+  arrange(desc(`Value Counts`)) |>
+  DT::datatable(options=list(
+    traffic_raw=5
+  ))
+```
+
+The entire database where `boro='Manhattan'` has 74 unique `street` values with varying counts.
+
+When further filtering our data to *just* include the congestion zone areas:
+
+* Below 60th Street
+* Excluding the following areas:
+  - FDR Drive
+  - West Side Highway/Route 9A
+  - Hugh L. Carey Tunnel
+
+
+We lose a little less than half of the Manhattan values, leaving 39 unique `street` values.
+
+```{r cpz_distinct_values[3], echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+
+df |>
+  group_by(street) |>
+  count(name="Value Counts") |>
+  mutate(street = str_to_title(street)) |>
+  rename(Street = street) |>
+  arrange(desc(`Value Counts`)) |>
+  DT::datatable(options=list(
+    df=5
+  ))
+```
+
+However, more importantly, we lose a large chunk of the available date range.
+
+```{r cpz_gap_plot[4], echo=FALSE, message=FALSE, warning=FALSE}
+#| code-fold: true
+# ensure daily data
+traffic_daily_cpz <- df |>
+  mutate(
+    ts   = make_datetime(as.integer(yr), as.integer(m), as.integer(d),
+                         as.integer(hh), as.integer(mm), tz = "America/New_York"),
+    date = as.Date(ts)
+  ) |>
+  group_by(date) |>
+  summarise(daily_volume = sum(as.numeric(vol), na.rm = TRUE), .groups = "drop") |>
+  arrange(date)
+
+# find gaps
+date_seq <- tibble(date = seq(min(traffic_daily_cpz$date), max(traffic_daily_cpz$date), by = "day"))
+
+gap_df <- date_seq |>
+  left_join(traffic_daily_cpz, by = "date") |>
+  mutate(has_data = !is.na(daily_volume))
+
+ggplot(filter(gap_df, has_data), aes(x = date, y = 1)) +
+  geom_tile(fill = "#58D68D", height = 0.4) +
+  labs(
+    title = "Daily Data Availability for Congestion-Zone Pricing Area",
+    x = "Date",
+    y = NULL
+  ) +
+  scale_x_date(
+    date_breaks = "6 months",
+    date_labels = "%b-%Y",
+    expand = c(0, 0)
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background   = element_rect(fill = "#0b1e39", color = NA),
+    panel.background  = element_rect(fill = "#0b1e39", color = NA),
+    plot.title        = element_text(color = "white", hjust = 0.5, face = "bold"),
+    axis.text.x       = element_text(color = "white", angle = 45, hjust = 1),
+    axis.text.y       = element_blank(),
+    axis.ticks.y      = element_blank(),
+    axis.title.y      = element_blank(),
+    panel.grid.major  = element_blank(),
+    panel.grid.minor  = element_blank(),
+    legend.position   = "none"
+  )
+
+
+```
+
+Below is a table of the gaps themselves:
+
+```{r cpz_gap_summary[5], echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+# summary table of the gap
+gap_summary <- gap_df |>
+  arrange(date) |>
+  mutate(
+    gap = !has_data & lag(has_data, default = TRUE),
+    gap_id = cumsum(gap)
+  ) |>
+  group_by(gap_id) |>
+  summarise(
+    gap_start = first(date[!has_data]),
+    gap_end = last(date[!has_data]),
+    gap_length = as.numeric(gap_end - gap_start + 1)
+  ) |>
+  filter(!is.na(gap_start)) |>
+  arrange(desc(gap_length)) |>
+  rename(
+    `Sequence ID` = gap_id,
+    `Gap Start` = gap_start,
+    `Gap End` = gap_end,
+    `Gap Length` = gap_length
+  )
+
+gap_summary |>
+  DT::datatable(options=list(
+    dom='tip',
+    gap_summary=5
+    ))
+```
+
+```{r value_counts_lost[6], echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+t1<- traffic_raw |>
+  group_by(street) |>
+  count(name="Value Counts") |>
+  mutate(street = str_to_title(street)) |>
+  rename(Street = street) |>
+  arrange(desc(`Value Counts`))
+
+t2<-df |>
+  group_by(street) |>
+  count(name="Value Counts") |>
+  mutate(street = str_to_title(street)) |>
+  rename(Street = street) |>
+  arrange(desc(`Value Counts`))
+
+c1<-format(sum(t1$`Value Counts`),big.mark=",")
+c2<-format(sum(t2$`Value Counts`),big.mark=",")
+
+diff <- (sum(t1$`Value Counts`) - sum(t2 $`Value Counts`))
+
+diff <- format(diff, big.mark=",")
+
+cat(sprintf("The overall Manhattan dataset has %s value counts while the CPZ-only data only has %s value counts, a difference of %s", c1, c2, diff))
+```
+
+This will lead to huge problems with any inference or modeling that we try to do.
+
+### Possible Solutions
+
+The simplest solution would just be to use the whole Manhattan dataset, though that doesn't seem super reasonable since congestion tries to focus on *just* below 60th Street.
+
+Including highways and expressways could also help, because even though it's not neccesary to go through the congestion zone to get from one to the other, it is something that can happen (e.g.: driving from the exit from the Brooklyn Bridge Northbound to the West Side Highway would take you directly through the congestion zone, even if only temporarily).

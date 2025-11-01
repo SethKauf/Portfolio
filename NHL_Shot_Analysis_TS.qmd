@@ -1,0 +1,344 @@
+---
+title: "NHL Shot Analysis"
+format: html
+css: styles.css
+---
+
+# Introduction
+
+A popular sport in both North America and Europe, ice hockey is considered one of the fastest and most difficult team games to play.
+
+In North America, the largest ice hockey league is the *National Hockey League* or *NHL*. It is a league comprised of 32 teams, 25 in the U.S. and 7 in Canada, all of whom compete each year to lift what some consider the greatest trophy in sports, the Stanley Cup.
+
+<div class="center-image" style="text-align: center;">
+![Panthers captain Aleksander Barkov lifts Cup in 2024, via AP News](images/ts1/barkov_cup_lift.png)
+</div>
+
+The basic rules of hockey are as follows:
+
+* Each team can have a maximum of 5 players plus a goaltender on the ice at any given time
+  - This can change based on whether a team has taken a penalty (infraction), or has pulled their goaltender for an extra attacked
+* You win by scoring more goals than the other team
+  - A goal is when the puck, the small black object made of vulcanized rubber, crosses the goal line and into the net
+  - There is an exception to this rule in the regular season, you can win in a shootout, which doesn't count as a goal
+  
+<div class="center-image" style="text-align: center;">
+![Hurricanes forward Jordan Martinook keeping the puck out of the net in the 2024 playoffs, via SportsNet on YouTube](images/ts1/martinook_playoff_save.png)
+</div>
+
+# Goals and Shot Attempts
+
+So, how does a team score a goal?
+
+The most standard way is to take a shot from somewhere, most often in the offensive/attacking zone. When a player takes a shot, it registers as a *shot attempt* (*SA*). When a shot attempt is placed on net, it counts as a *shot on goal* (*SoG*), and when it goes into the goal, it's counted as a *goal* or *goal for* (*GF*).
+
+The first *gif* below shows a shot attempt that is also a shot on goal and a goal for.
+
+<figure style="text-align: center;">
+  <img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExemNpbW5yaHl0ejhycmE1dDJzeWp5ZHlndHZtdHM5OXd4NmtxMGNzaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/22DTizzirZseyvTn2t/giphy.gif" alt="Weber Slapshot">
+  <figcaption>A shot attempt, a shot on goal and a goal for. Credit anonymous on Giphy</figcaption>
+</figure>
+
+The second *gif* shows a shot attempt that was blocked by a defender and is therefore only a shot attempt, not a shot on goal.
+
+<figure style="text-align: center;">
+  <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExZWpubm82Nmo2dHZrMDQwNGJmc3huODh2a2htNm5xOXRwdmhqNG5xMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/13eFj2I8TE3YY/giphy.gif" alt="Landeskog Wristshot">
+  <figcaption>A shot attempt, but not a shot on goal. Credit @hockeyplayersclub on Giphy</figcaption>
+</figure>
+
+
+# Project Motivation
+
+Any fan of the NHL might have heard the term *shot attempt*, especially from the last few years, as broadcasting networks such as *ESPN* have talked about them *ad nauseum* as a be-all-end-all offensive statistic.
+
+As a New York Rangers fan, I especially began to notice the term being used in reference to the Carolina Hurricanes, a team whom the Rangers have played twice in the playoffs in the past 3 years (2022 and 2024). The Hurricanes would frequently have double or triple the number of shot attempts that the Rangers would have, however...
+
+<figure style="text-align:center; padding:10px; border-radius:8px;">
+  <img src="images/ts1/Rangers_2022_Win.png" height="200px" style="margin-right:10px;">
+  <img src="images/ts1/Rangers_2024_Win.png" height="200px">
+  <figcaption style="color:black; font-style:italic; margin-top:8px;">
+    Sorry not sorry, Hurricanes fans (credit SportsNet on YouTube)
+  </figcaption>
+</figure>
+
+However, neither the Rangers nor the Hurricanes were the primary motivation for this analysis. It's actually the Florida Panthers, the current reigning back-to-back Stanley Cup champions.
+
+The Florida Panthers have made the Stanley Cup Final for the past 3 years, losing the first year to Vegas, then winning the past two against Edmonton both times. After making the Final for the third consecutive season by beating the Carolina Hurricanes in the Eastern Conference Final in 5 games, Hurricanes coach Rod Brind'Amour said ["[The Florida Panthers] are the standard"](https://www.sportsnet.ca/nhl/video/hurricanes-brindamour-sees-panthers-style-of-play-as-the-standard/).
+
+The Panthers are a team that prides itself on a two-way game, being effective in all-three zones. In the offensive zone, that includes getting shots to the net. The NHL is a copycat league, as are most in the sports world. This leads me to analyzing Shot Attempts as a metric and trying to forecast shot attempts throughout the year in a standard, 82 game regular season.
+
+# Data
+
+To analyze this, I used [MonkeyPuck.com data](https://moneypuck.com/data.htm). Specifically, their game data which has tracked NHL games since the 2008 season.
+
+For this project, I will only look at data from the 2021 season (which began on October 12, 2021) through the beginning of the 2025 (current) season, with the most recent data as of October 28, 2025, excluding all playoffs.
+
+The reasons for this specific stratification are:
+
+* This is reasonably recent data
+* The 2021-22 season is when the NHL expanded to its current number of 32 teams with the addition of the `Seattle Kraken`
+* This was the first full-length, 82 game season following the 2020-21 COVID Pandemic
+  - Each season has been 82 regular season games for each team
+* All 32 teams played 82 games in the 4 seasons of training data ($32 \times 82 \times 4 = 10,496$ total games)
+  - Each team has played a minimum of $8$ games in the 2025 season which can be used as testing data for Time Series forecasting
+
+```{r packages[0], echo=FALSE, message=FALSE, warning=FALSE}
+if (!require("dplyr")) install.packages("dplyr")
+if (!require("forecast")) install.packages("forecast")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("RSocrata")) install.packages("RSocrata")
+if (!require("scales")) install.packages("scales")
+if (!require("sf")) install.packages("sf")
+if (!require("stringr")) install.packages("stringr")
+if (!require("tseries")) install.packages("tseries")
+
+#libraries
+library(dplyr)
+library(forecast)
+library(ggplot2)
+library(lubridate)
+library(scales)
+library(tseries)
+```
+
+## Raw Data
+
+The below data has been filtered and had some renaming done for visual purposes, but is more-or-less the raw data that was pulled from MoneyPuck.
+
+```{r moneypuck[1], echo=FALSE,message=FALSE,warning=FALSE}
+#| code-fold: TRUE
+# read in data
+df <- read.csv("data/TS1/nhl_shot_attempts_2020_2025.csv")
+
+# fixing feature names and removing all playoff games
+df <- df |>
+  filter(
+    playoffGame == 0,
+    season > 2020
+  ) |>
+  mutate(home = case_when(
+    home_or_away == "HOME" ~ 1,
+    TRUE ~ 0),
+    date = as.Date(as.character(gameDate),format="%Y%m%d"),
+    year_month = floor_date(date, "month")
+  ) |>
+  select(
+    season,
+    gameId,
+    date,
+    year_month,
+    home_or_away,
+    team,
+    opposingTeam,
+    shotAttemptsFor,
+    shotAttemptsAgainst,
+    shotsOnGoalFor,
+    shotsOnGoalAgainst,
+    goalsFor,
+    goalsAgainst
+  ) |>
+  rename(
+    `id` = gameId,
+    `home` = home_or_away,
+    `opp` = opposingTeam,
+    `safor` = shotAttemptsFor,
+    `saagt` = shotAttemptsAgainst,
+    `sgfor` = shotsOnGoalFor,
+    `sgagt` = shotsOnGoalAgainst,
+    `gf` = goalsFor,
+    `ga` = goalsAgainst
+  )
+
+# sample of 3 games across the seasons
+df |>
+  filter(
+    id %in% c("2021021201","2023020205","2025020131")
+    ) |>
+  select(
+    team,
+    season,
+    id,
+    date,
+    safor
+  ) |>
+  mutate(
+    team = case_when(
+      team == "DET" ~ "Detroit Red Wings",
+      team == "NYR" ~ "New York Rangers",
+      team == "CAR" ~ "Carolina Hurricanes",
+      team == "FLA" ~ "Florida Panthers",
+      team == "UTA" ~ "Utah Mammoth",
+      team == "MIN" ~ "Minnesota Wild",
+      TRUE ~ team
+    )
+  ) |>
+  arrange(date, team) |>
+  rename(
+    `Team`=team,
+    `Season`=season,
+    `Game_ID`=id,
+    `Date`=date,
+    `ShotAttempts_For`=safor
+  ) |>
+  DT::datatable(options=(list(
+    dom='tip',
+    df=6,
+    pageLength=6
+  )))
+```
+
+## Data Preprocessing
+
+For the temporal component of this analysis, I aggregated all of the `ShotAttempts_For` for each team across each `game_number`.
+
+What this means is, for each team's game 1, or game 2, 3... 82 (e.g.: $gameNumber \in [1-82]$), we take the average of all 32 teams in each season and count that.
+
+So as an example, below we see the first game of each season (excluding 2025 since it's not included in the training data) for the *Los Angeles Kings*:
+
+```{r lak[2], echo=FALSE,message=FALSE,warning=FALSE}
+#| code-fold: TRUE
+# create game numbers df
+df_gn <- df |>
+  arrange(season, team, date, id) |>
+  group_by(season, team) |>
+  mutate(game_no = row_number()) |>
+  ungroup()
+
+# aggregate LA Kings Info
+lak_g1_detail <- df_gn |>
+  filter(
+    team == "LAK",
+    game_no == 1,
+    season < 2025
+  ) |>
+  mutate(
+    team = dplyr::case_when(
+      team == "LAK" ~ "LA Kings",
+      TRUE ~ team
+    )
+  ) |>
+  select(
+    team,
+    season,
+    safor,
+    date
+  ) |>
+  arrange(season) |>
+  rename(
+    `Team` = team,
+    `Season` = season,
+    `Date` = date,
+    `ShotAttempts_For` = safor
+  )
+
+lak_g1_sum <- df_gn |>
+  filter(
+    team == "LAK",
+    game_no == 1,
+    season < 2025
+  ) |>
+  summarise(
+    Mean_ShotAttempts_For   = round(mean(safor, na.rm = TRUE), 1),
+    StDev_ShotAttempts_For  = round(sd(safor,  na.rm = TRUE), 1)
+  )
+
+combined <- lak_g1_detail |>
+  mutate(
+    Season = as.character(Season),
+    Date = as.character(Date),
+    Mean_ShotAttempts_For  = NA_real_,
+    StDev_ShotAttempts_For = NA_real_
+  ) |>
+  bind_rows(
+    tibble::tibble(
+      Team = "LA Kings",
+      Season = "Summary",
+      Date = NA_character_,
+      ShotAttempts_For = NA_real_,
+      Mean_ShotAttempts_For  = lak_g1_sum$Mean_ShotAttempts_For,
+      StDev_ShotAttempts_For = lak_g1_sum$StDev_ShotAttempts_For
+    )
+  )
+
+combined <- combined |>
+  select(
+    Team,
+    Season,
+    Date,
+    ShotAttempts_For,
+    Mean_ShotAttempts_For,
+    StDev_ShotAttempts_For
+  )
+
+DT::datatable(
+  combined,
+  options = list(
+    dom = "tip",
+    pageLength = 5
+  ),
+  rownames = FALSE,
+  caption = htmltools::tags$caption(
+    style = "caption-side: bottom; text-align: left;",
+    "LAK — Game 1 detail by season, with summary mean/SD row"
+  )
+)
+```
+
+So, across the four $GameNumber=1$ for the *Los Angeles Kings*, $\mu\approx65.2$ and $\sigma\approx16.3$.
+
+Doing this for every team, then averaging those values, we get the following:
+
+```{r league_gn[3], echo=FALSE,message=FALSE,warning=FALSE}
+#| code-fold: TRUE
+# aggregate all game numbers
+league_gn <- df_gn |>
+  group_by(game_no) |>
+  summarise(
+    avg_safor = mean(safor, na.rm = TRUE),
+    sd_safor = sd(safor, na.rm = TRUE),
+    n_obs = n(),
+    .groups = "drop"
+  ) |>
+  arrange(game_no)
+
+
+complete_teams <- df_gn |>
+  group_by(season, team) |>
+  summarise(max_g = max(game_no), .groups = "drop") |>
+  filter(max_g >= 82)
+
+df_gn <- df_gn |>
+  inner_join(complete_teams |> select(season, team), by = c("season", "team")) |>
+  filter(game_no <= 82)
+
+league_gn <- df_gn |>
+  group_by(game_no) |>
+  summarise(
+    avg_safor = mean(safor, na.rm = TRUE),
+    sd_safor = sd(safor, na.rm = TRUE),
+    n_obs = n(),
+    .groups = "drop"
+  ) |>
+  arrange(game_no)
+
+league_gn |>
+  filter(
+    game_no %in% (c(1, 24, 55, 81, 82))
+  ) |>
+  mutate(
+    avg_safor = round(avg_safor,2),
+    sd_safor = round(sd_safor,2)
+  ) |>
+  rename(
+    Game_Number = game_no,
+    Avg_ShotAttempts_For = avg_safor,
+    StDev_ShotAttempts_For = sd_safor,
+    Number_of_Observations = n_obs
+  ) |>
+  DT::datatable(
+    options = list(
+      dom = "tip",
+      pageLength = 5
+    )
+  )
+```

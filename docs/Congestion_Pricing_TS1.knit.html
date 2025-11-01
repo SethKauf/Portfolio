@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>About Me – Seth Kaufman’s Portfolio</title>
+<title>Congestion Pricing TimeSeries – Seth Kaufman’s Portfolio</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -19,6 +19,40 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -66,28 +100,9 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<link href="site_libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
-
-<script src="site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
-
-<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
-
-<link href="site_libs/leaflet-1.3.1/leaflet.css" rel="stylesheet">
-
-<script src="site_libs/leaflet-1.3.1/leaflet.js"></script>
-
-<link href="site_libs/leafletfix-1.0.0/leafletfix.css" rel="stylesheet">
-
-<script src="site_libs/proj4-2.6.2/proj4.min.js"></script>
-
-<script src="site_libs/Proj4Leaflet-1.0.1/proj4leaflet.js"></script>
-
-<link href="site_libs/rstudio_leaflet-1.3.1/rstudio_leaflet.css" rel="stylesheet">
-
-<script src="site_libs/leaflet-binding-2.2.3/leaflet.js"></script>
 
 
-
+<link rel="stylesheet" href="styles.css">
 </head>
 
 <body class="nav-fixed fullcontent">
@@ -112,7 +127,7 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./about.html" aria-current="page"> 
+    <a class="nav-link" href="./about.html"> 
 <span class="menu-text">About</span></a>
   </li>  
 </ul>
@@ -153,10 +168,6 @@ ul.task-list li input[type="checkbox"] {
     <a class="dropdown-item" href="./Home_Pricing_Competition.html">
  <span class="dropdown-text">Home Pricing Prediction Competition</span></a>
   </li>  
-        <li>
-    <a class="dropdown-item" href="./NHL_Shot_Analysis_TS.html">
- <span class="dropdown-text">NHL Shot Attempts Time Series Analysis</span></a>
-  </li>  
     </ul>
   </li>
 </ul>
@@ -176,7 +187,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">About Me</h1>
+<h1 class="title">Congestion Pricing TimeSeries</h1>
 </div>
 
 
@@ -193,34 +204,202 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Hi, I’m Seth Kaufman, a data scientist living in New York.</p>
-<p>I’m currently completing my Master’s degree in Statistics with a Data Science focus at Zicklin School of Business at Baruch College.</p>
-<div class="cell">
-<div class="cell-output-display">
-<div class="leaflet html-widget html-fill-item" id="htmlwidget-f04de67a9b7c3b556f26" style="width:100%;height:464px;"></div>
-<script type="application/json" data-for="htmlwidget-f04de67a9b7c3b556f26">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"https://openstreetmap.org/copyright/\">OpenStreetMap<\/a>,  <a href=\"https://opendatacommons.org/licenses/odbl/\">ODbL<\/a>"}]},{"method":"addPopups","args":[40.75028,-73.98333,"I am a Master's student at <b>Baruch College<\/b>!",null,null,{"maxWidth":300,"minWidth":50,"autoPan":true,"keepInView":false,"closeButton":true,"className":""}]}],"setView":[[40.75028,-73.98333],17,[]],"limits":{"lat":[40.75028,40.75028],"lng":[-73.98333,-73.98333]}},"evals":[],"jsHooks":[]}</script>
-</div>
-</div>
-<p>I’ve always had a love for computers and math, so marrying the two as a data scientist was a no-brainer for me, though it took me a bit to get here.</p>
-<p>My education started at SUNY Albany where I received a BA in Political Science in 2018. In 2019 I was working a job that allowed me to start getting more into data analysis. This eventually led me to the <a href="https://flatironschool.com/">Flatiron School</a>, a Data Science bootcamp based in NYC. I’ve now been working in the data science and analytics field for 4 years since completing Flatiron, with many more to come.</p>
-<p>On a more personal level, I love travelling and languages. My wife and I want to see and experience as much of the world as possible, including our honeymoon in Brazil and our recent summer vacation in Italy. English is my native language, though I have a very good working proficiency in Russian and some working proficiency in Hebrew. I am also currently trying to learn some Spanish, Portuguese and Italian on DuoLingo.</p>
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>My current DuoLingo streak is 2,337 days!</code></pre>
-</div>
-</div>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>For this project, I’ve decided to use New York City Open Data to look at car traffic into Manhattan from January 2020 through June 2025.</p>
+<p>This timespan covers two major events in NYC’s recent history:</p>
+<ul>
+<li>The 2020-21 COVID pandemic</li>
+<li>Congestion Pricing</li>
+</ul>
+<p>In early 2020, the United States along with the rest of the world experienced the COVID Health Pandemic, which caused massive changes and disruptions to the normal, expected flow of life. In terms of vehicle travel, according to the <a href="https://www.bts.gov/covid-19/daily-vehicle-travel">Bureau of Transportation Statistics</a>, we saw a massive dip in vehicle travel for the first few months of the pandemic and stayed below their expected travel baseline until the summer of 2020, only surpassing it regularly in early 2021.</p>
 <div class="center-image" style="text-align: center;">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="images/georgia.jpg" class="img-fluid figure-img"></p>
-<figcaption>2024 Trip to Savannah, GA</figcaption>
+<p><img src="images/ts1/BTS_VMT_2020_2021.png" class="img-fluid figure-img"></p>
+<figcaption>Vehicle Travel Trends via the Bureau of Transportation Statistics</figcaption>
 </figure>
 </div>
-
-
 </div>
+<p>In early January 2025, New York City enacted <a href="https://www.nytimes.com/2025/01/04/nyregion/congestion-pricing-nyc.html">Congestion Pricing</a>, where vehicles would be tolled for entering Manhattan via car. This toll is $9 during peak period (5AM to 9PM on weekdays) and $2.25 otherwise. The debates over congestion pricing, its enacting and its merits are still ongoing today, the fact remains it’s currently in place, with plans to gradually increase the tolls over the next 6 years until it caps out at $15 in 2031.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>:</p>
+<p>So with two major events related to car-traffic in NYC, what does the data say so far?</p>
+<p>In this project, I look at the overall time trends, then specifically the time trends during what’s considered “Peak” travel hours into NYC. I hope to answer the following in the context of a Time Series problem:</p>
+<ul>
+<li>What does car traffic into Manhattan look like right now?</li>
+<li>Can we forecast what car traffic might look like for the next 365 days?</li>
+</ul>
+</section>
+<section id="nyc-open-data" class="level1">
+<h1>NYC Open Data</h1>
+<p>To answer this question, I’ll be using <a href="https://opendata.cityofnewyork.us/">NYC Open Data</a>, a free public database published by New York City agencies and other partners.</p>
+<p>The dataset Automated Traffic Volume Counts, maintained by the New York City Department of Transportation (NYC DOT) uses Automated Traffic Recorders (ATR) to collect traffic sample volume counts at bridge crossings and roadways. These counts do not cover the entire year, and the number of days counted per location may vary from year to year. <a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<section id="data-dictionary" class="level2">
+<h2 class="anchored" data-anchor-id="data-dictionary">Data Dictionary</h2>
+<p>The overall dataset spans from early February 2020 through late June 2025, is updated regularly (last update <code>September 20, 2025</code>) and contains <code>1.84M</code> records and 14 columns:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 22%">
+<col style="width: 40%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Column Name</th>
+<th>Column Description</th>
+<th>Term, Acronym, or Code Definitions</th>
+<th>Additional Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>RequestID</strong></td>
+<td>A unique ID that is generated for each counts request.</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><strong>boro</strong></td>
+<td>Lists which of the five administrative divisions of New York City the location is within, written as a word.</td>
+<td></td>
+<td>Brooklyn<br>Bronx<br>Manhattan<br>Staten Island<br>Queens</td>
+</tr>
+<tr class="odd">
+<td><strong>yr</strong></td>
+<td>The two-digit year portion of the date when the count was conducted.</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><strong>m</strong></td>
+<td>The two-digit month portion of the date when the count was conducted.</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><strong>d</strong></td>
+<td>The two-digit day portion of the date when the count was conducted.</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><strong>hh</strong></td>
+<td>The two-digit hour portion of the time when the count was conducted.</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><strong>mm</strong></td>
+<td>The two-digit start-minute portion of the time when the count was conducted.</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><strong>vol</strong></td>
+<td>The total sum of count collected within a 15-minute increment.</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><strong>segmentId</strong></td>
+<td>The ID that identifies each segment of a street in the LION street network version 14.</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><strong>WktGeom</strong></td>
+<td>A text markup language for representing vector geometry objects on a map and spatial reference systems of spatial objects.</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><strong>street</strong></td>
+<td>The ‘On Street’ where the count took place.</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><strong>fromSt</strong></td>
+<td>The ‘From Street’ where the count took place.</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><strong>toSt</strong></td>
+<td>The ‘To Street’ where the count took place.</td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><strong>direction</strong></td>
+<td>The text-based direction of traffic where the count took place.</td>
+<td></td>
+<td>NB = Northbound<br>SB = Southbound<br>EB = Eastbound<br>WB = Westbound<br>NS = North/South<br>EW = East/West</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="data-inspection" class="level2">
+<h2 class="anchored" data-anchor-id="data-inspection">Data Inspection</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># packages</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">"ggplot2"</span>)) <span class="fu">install.packages</span>(<span class="st">"ggplot2"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">"RSocrata"</span>)) <span class="fu">install.packages</span>(<span class="st">"RSocrata"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">"scales"</span>)) <span class="fu">install.packages</span>(<span class="st">"scales"</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">"sf"</span>)) <span class="fu">install.packages</span>(<span class="st">"sf"</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">"stringr"</span>)) <span class="fu">install.packages</span>(<span class="st">"stringr"</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">#libraries</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RSocrata)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(scales)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># set API key</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">NYC_OD_KEY=</span><span class="fu">readLines</span>(<span class="st">".secrets"</span>))</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>endpoint <span class="ot">&lt;-</span> <span class="st">"https://data.cityofnewyork.us/resource/7ym2-wayt.json"</span> <span class="co"># traffic data</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># query to pull only Manhattan data</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>qry <span class="ot">&lt;-</span> <span class="fu">paste0</span>(</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  endpoint,</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"?$select=*"</span>,</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="st">"&amp;$where=boro='Manhattan' AND yr &gt;= 2020"</span>,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="st">"&amp;$order=yr,m,d,hh,mm"</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># read query</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>traffic_raw <span class="ot">&lt;-</span> <span class="fu">read.socrata</span>(qry)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># display raw data</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(traffic_raw) <span class="sc">|&gt;</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  DT<span class="sc">::</span><span class="fu">datatable</span>(<span class="at">options=</span><span class="fu">list</span>(<span class="at">traffic_raw=</span><span class="dv">6</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="datatables html-widget html-fill-item" id="htmlwidget-f49e5ff0df928e3cc7b7" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-f49e5ff0df928e3cc7b7">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["31900","31900","31900","31900","31900","31900"],["Manhattan","Manhattan","Manhattan","Manhattan","Manhattan","Manhattan"],["2020","2020","2020","2020","2020","2020"],["2","2","2","2","2","2"],["3","3","3","3","3","3"],["0","0","0","0","1","1"],["0","15","30","45","0","15"],["29","20","17","19","18","11"],["182697","182697","182697","182697","182697","182697"],["POINT (999848.3093221203 247759.78308722837)","POINT (999848.3093221203 247759.78308722837)","POINT (999848.3093221203 247759.78308722837)","POINT (999848.3093221203 247759.78308722837)","POINT (999848.3093221203 247759.78308722837)","POINT (999848.3093221203 247759.78308722837)"],["HENRY HUDSON PARKWAY EXIT NB","HENRY HUDSON PARKWAY EXIT NB","HENRY HUDSON PARKWAY EXIT NB","HENRY HUDSON PARKWAY EXIT NB","HENRY HUDSON PARKWAY EXIT NB","HENRY HUDSON PARKWAY EXIT NB"],["Cbe Nb Exit 1 A Upperdeck","Cbe Nb Exit 1 A Upperdeck","Cbe Nb Exit 1 A Upperdeck","Cbe Nb Exit 1 A Upperdeck","Cbe Nb Exit 1 A Upperdeck","Cbe Nb Exit 1 A Upperdeck"],["Riverside Drive","Riverside Drive","Riverside Drive","Riverside Drive","Riverside Drive","Riverside Drive"],["SB","SB","SB","SB","SB","SB"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>requestid<\/th>\n      <th>boro<\/th>\n      <th>yr<\/th>\n      <th>m<\/th>\n      <th>d<\/th>\n      <th>hh<\/th>\n      <th>mm<\/th>\n      <th>vol<\/th>\n      <th>segmentid<\/th>\n      <th>wktgeom<\/th>\n      <th>street<\/th>\n      <th>fromst<\/th>\n      <th>tost<\/th>\n      <th>direction<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"traffic_raw":6,"columnDefs":[{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"requestid","targets":1},{"name":"boro","targets":2},{"name":"yr","targets":3},{"name":"m","targets":4},{"name":"d","targets":5},{"name":"hh","targets":6},{"name":"mm","targets":7},{"name":"vol","targets":8},{"name":"segmentid","targets":9},{"name":"wktgeom","targets":10},{"name":"street","targets":11},{"name":"fromst","targets":12},{"name":"tost","targets":13},{"name":"direction","targets":14}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+<section id="limitations" class="level2">
+<h2 class="anchored" data-anchor-id="limitations">Limitations</h2>
+<p>As noted by NYC DOT:</p>
+<blockquote class="blockquote">
+<p>…These counts do not cover the entire year, and the number of days counted per location may vary from year to year.</p>
+</blockquote>
 
-</main> <!-- /main -->
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p><a href="https://congestionreliefzone.mta.info/tolling">MTA Congestion Pricing Plan</a><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a href="https://data.cityofnewyork.us/Transportation/Automated-Traffic-Volume-Counts/7ym2-wayt/about_data">NYC Open Data: Automated Traffic Volume Counts</a><a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
