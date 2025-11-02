@@ -36,7 +36,7 @@ The first *gif* below shows a shot attempt that is also a shot on goal and a goa
 
 <figure style="text-align: center;">
   <img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExemNpbW5yaHl0ejhycmE1dDJzeWp5ZHlndHZtdHM5OXd4NmtxMGNzaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/22DTizzirZseyvTn2t/giphy.gif" alt="Weber Slapshot">
-  <figcaption>A shot attempt, a shot on goal and a goal for. Credit anonymous on Giphy</figcaption>
+  <figcaption>A shot attempt, a shot on goal and a goal for. Credit @hockeyplayersclub on Giphy</figcaption>
 </figure>
 
 The second *gif* shows a shot attempt that was blocked by a defender and is therefore only a shot attempt, not a shot on goal.
