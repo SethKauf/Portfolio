@@ -899,7 +899,7 @@ Potential next-steps for this project include:
 * Figure out a way to include playoffs
 * Use regression analysis to see if Shot Attempts are increasing or staying the same
 
-## Do the Gritty
+## Hit the Gritty
 
 <figure style="text-align: center;">
   <img src="https://media.giphy.com/media/Qv4Jw8utQgYTUKnyo6/giphy.gif" alt="Gritty">
