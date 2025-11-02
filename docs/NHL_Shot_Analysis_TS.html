@@ -278,11 +278,11 @@ A shot attempt, but not a shot on goal. Credit <span class="citation" data-cites
 <section id="project-motivation" class="level1">
 <h1>Project Motivation</h1>
 <p>Any fan of the NHL might have heard the term <em>shot attempt</em>, especially from the last few years, as broadcasting networks such as <em>ESPN</em> have talked about them <em>ad nauseum</em> as a be-all-end-all offensive statistic.</p>
-<p>As a New York Rangers fan, I especially began to notice the term being used in reference to the Carolina Hurricanes, a team whom the Rangers have played twice in the playoffs in the past 3 years (2022 and 2024). The Hurricanes would frequently have double or triple the number of shot attempts that the Rangers would have, however…</p>
+<p>As a New York Rangers fan, I especially began to notice the term being used in reference to the Carolina Hurricanes, a team whom the Rangers have played twice in the playoffs in the past 3 years (2022 and 2024). The Hurricanes would frequently have double or triple the number of shot attempts as the Rangers, however…</p>
 <figure style="text-align:center; padding:10px; border-radius:8px;" class="figure">
 <img src="images/ts1/Rangers_2022_Win.png" height="200px" style="margin-right:10px;" class="figure-img"> <img src="images/ts1/Rangers_2024_Win.png" height="200px" class="figure-img">
 <figcaption style="color:black; font-style:italic; margin-top:8px;">
-Sorry not sorry, Hurricanes fans (credit SportsNet on YouTube)
+Sorry not sorry, Hurricanes fans (via SportsNet on YouTube)
 </figcaption>
 </figure>
 <p>However, neither the Rangers nor the Hurricanes were the primary motivation for this analysis. It’s actually the Florida Panthers, the current reigning back-to-back Stanley Cup champions.</p>
@@ -304,6 +304,7 @@ Sorry not sorry, Hurricanes fans (credit SportsNet on YouTube)
 <li>All 32 teams played 82 games in the 4 seasons of training data (<span class="math inline">\(32 \times 82 \times 4 = 10,496\)</span> total games)
 <ul>
 <li>Each team has played a minimum of <span class="math inline">\(8\)</span> games in the 2025 season which can be used as testing data for Time Series forecasting</li>
+<li>As a note, the <code>Arizona Coyotes</code> moved to Utah for the 2024 season, so the <code>Arizona Coyotes</code>, the <code>Utah Hockey Club</code> and the <code>Utah Mammoth</code> are all counted as the same franchise for the purpose of this analysis</li>
 </ul></li>
 </ul>
 <section id="raw-data" class="level2">
@@ -311,8 +312,8 @@ Sorry not sorry, Hurricanes fans (credit SportsNet on YouTube)
 <p>The below data has been filtered and had some renaming done for visual purposes, but is more-or-less the raw data that was pulled from MoneyPuck.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div class="datatables html-widget html-fill-item" id="htmlwidget-091a242e5d6bcfa35c96" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-091a242e5d6bcfa35c96">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5","6"],["Detroit Red Wings","New York Rangers","Carolina Hurricanes","Florida Panthers","Minnesota Wild","Utah Mammoth"],[2021,2021,2023,2023,2025,2025],[2021021201,2021021201,2023020205,2023020205,2025020131,2025020131],["2022-04-16","2022-04-16","2023-11-10","2023-11-10","2025-10-25","2025-10-25"],[37,68,69,60,75,62]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Team<\/th>\n      <th>Season<\/th>\n      <th>Game_ID<\/th>\n      <th>Date<\/th>\n      <th>ShotAttempts_For<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"tip","df":6,"pageLength":6,"columnDefs":[{"className":"dt-right","targets":[2,3,5]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"Team","targets":1},{"name":"Season","targets":2},{"name":"Game_ID","targets":3},{"name":"Date","targets":4},{"name":"ShotAttempts_For","targets":5}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[6,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-a75cfdf475bd2d3c8518" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-a75cfdf475bd2d3c8518">{"x":{"filter":"none","vertical":false,"data":[["Detroit Red Wings","New York Rangers","Carolina Hurricanes","Florida Panthers","Minnesota Wild","Utah Mammoth"],[2021,2021,2023,2023,2025,2025],[2021021201,2021021201,2023020205,2023020205,2025020131,2025020131],["2022-04-16","2022-04-16","2023-11-10","2023-11-10","2025-10-25","2025-10-25"],[37,68,69,60,75,62]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Team<\/th>\n      <th>Season<\/th>\n      <th>Game_ID<\/th>\n      <th>Date<\/th>\n      <th>ShotAttempts_For<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"tip","pageLength":6,"columnDefs":[{"className":"dt-right","targets":[1,2,4]},{"name":"Team","targets":0},{"name":"Season","targets":1},{"name":"Game_ID","targets":2},{"name":"Date","targets":3},{"name":"ShotAttempts_For","targets":4}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[6,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 </section>
@@ -323,18 +324,249 @@ Sorry not sorry, Hurricanes fans (credit SportsNet on YouTube)
 <p>So as an example, below we see the first game of each season (excluding 2025 since it’s not included in the training data) for the <em>Los Angeles Kings</em>:</p>
 <div class="cell">
 <div class="cell-output-display">
-<div class="datatables html-widget html-fill-item" id="htmlwidget-5091596e0a75672c2c6b" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-5091596e0a75672c2c6b">{"x":{"filter":"none","vertical":false,"caption":"<caption style=\"caption-side: bottom; text-align: left;\">LAK — Game 1 detail by season, with summary mean/SD row<\/caption>","data":[["LA Kings","LA Kings","LA Kings","LA Kings","LA Kings"],["2021","2022","2023","2024","Summary"],["2021-10-14","2022-10-11","2023-10-11","2024-10-10",null],[84,56,73,48,null],[null,null,null,null,65.2],[null,null,null,null,16.3]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Team<\/th>\n      <th>Season<\/th>\n      <th>Date<\/th>\n      <th>ShotAttempts_For<\/th>\n      <th>Mean_ShotAttempts_For<\/th>\n      <th>StDev_ShotAttempts_For<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"tip","pageLength":5,"columnDefs":[{"className":"dt-right","targets":[3,4,5]},{"name":"Team","targets":0},{"name":"Season","targets":1},{"name":"Date","targets":2},{"name":"ShotAttempts_For","targets":3},{"name":"Mean_ShotAttempts_For","targets":4},{"name":"StDev_ShotAttempts_For","targets":5}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[5,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-ce8e2346bc0808cc37c0" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-ce8e2346bc0808cc37c0">{"x":{"filter":"none","vertical":false,"caption":"<caption style=\"caption-side: bottom; text-align: left;\">LAK — Game 1 detail by season, with summary mean/SD row<\/caption>","data":[["LA Kings","LA Kings","LA Kings","LA Kings","LA Kings"],["2021","2022","2023","2024","Summary"],["2021-10-14","2022-10-11","2023-10-11","2024-10-10",null],[84,56,73,48,null],[null,null,null,null,65.2],[null,null,null,null,16.3]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Team<\/th>\n      <th>Season<\/th>\n      <th>Date<\/th>\n      <th>ShotAttempts_For<\/th>\n      <th>Mean_ShotAttempts_For<\/th>\n      <th>StDev_ShotAttempts_For<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"tip","pageLength":5,"columnDefs":[{"className":"dt-right","targets":[3,4,5]},{"name":"Team","targets":0},{"name":"Season","targets":1},{"name":"Date","targets":2},{"name":"ShotAttempts_For","targets":3},{"name":"Mean_ShotAttempts_For","targets":4},{"name":"StDev_ShotAttempts_For","targets":5}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[5,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
 <p>So, across the four <span class="math inline">\(GameNumber=1\)</span> for the <em>Los Angeles Kings</em>, <span class="math inline">\(\mu\approx65.2\)</span> and <span class="math inline">\(\sigma\approx16.3\)</span>.</p>
 <p>Doing this for every team, then averaging those values, we get the following:</p>
 <div class="cell">
 <div class="cell-output-display">
-<div class="datatables html-widget html-fill-item" id="htmlwidget-180d9165683e9e111860" style="width:100%;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-180d9165683e9e111860">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5"],[1,24,55,81,82],[60.17,58.52,60.12,58.5,57.82],[12.21,12.1,11.51,12.96,11.81],[128,128,128,128,128]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Game_Number<\/th>\n      <th>Avg_ShotAttempts_For<\/th>\n      <th>StDev_ShotAttempts_For<\/th>\n      <th>Number_of_Observations<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"tip","pageLength":5,"columnDefs":[{"className":"dt-right","targets":[1,2,3,4]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"Game_Number","targets":1},{"name":"Avg_ShotAttempts_For","targets":2},{"name":"StDev_ShotAttempts_For","targets":3},{"name":"Number_of_Observations","targets":4}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[5,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-d37419994fcaa17e7f1d" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-d37419994fcaa17e7f1d">{"x":{"filter":"none","vertical":false,"data":[["1","2","3","4","5"],[1,24,55,81,82],[60.17,58.52,60.12,58.5,57.82],[12.21,12.1,11.51,12.96,11.81],[128,128,128,128,128]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>Game_Number<\/th>\n      <th>Avg_ShotAttempts_For<\/th>\n      <th>StDev_ShotAttempts_For<\/th>\n      <th>Number_of_Observations<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"tip","pageLength":5,"columnDefs":[{"className":"dt-right","targets":[1,2,3,4]},{"orderable":false,"targets":0},{"name":" ","targets":0},{"name":"Game_Number","targets":1},{"name":"Avg_ShotAttempts_For","targets":2},{"name":"StDev_ShotAttempts_For","targets":3},{"name":"Number_of_Observations","targets":4}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[5,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
 </div>
 </div>
+<p>There are <span class="math inline">\(128\)</span> occurances of each game number (<span class="math inline">\(32 \times 4\)</span>).</p>
+</section>
+</section>
+<section id="eda" class="level1">
+<h1>EDA</h1>
+<p>Before performing any Time Series modeling, I wanted to see if we could gain any other insights from the data, including its distribution.</p>
+<section id="shot-attempt-volume" class="level2">
+<h2 class="anchored" data-anchor-id="shot-attempt-volume">Shot Attempt Volume</h2>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="NHL_Shot_Analysis_TS_files/figure-html/eda[4]-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>This <code>stacked bar/proportion</code> chart gives us an idea of the volume of <code>shot attempts</code>.</p>
+</section>
+<section id="top-10" class="level2">
+<h2 class="anchored" data-anchor-id="top-10">Top 10</h2>
+<p>Next I looked at <code>shots on goal</code> to <code>shot attempts</code> and <code>goals for</code> to <code>shot attempts</code> and ranked the top 10 in each, along with their respective win % (how many Regulation/OT Wins, not including shootout wins).</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="NHL_Shot_Analysis_TS_files/figure-html/wins[5]-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>It’s interesting that <code>shots on goal / shot attempts</code> tends to favor teams with some of the worse win percentages, while <code>goals for / shot attempts</code> seems to favor the better teams, and other than the Buffalo Sabres, the teams that are top 10 in both metrics tend to be some of the better teams in the league.</p>
+</section>
+<section id="shot-attempt-distribution" class="level2">
+<h2 class="anchored" data-anchor-id="shot-attempt-distribution">Shot Attempt Distribution</h2>
+<p>The below histogram and tests show the distribution of <code>shot attmepts</code> over a :</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="NHL_Shot_Analysis_TS_files/figure-html/distribution[6]-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The distribution looks to be fairly normal.</p>
+<p>Running a few tests we can ensure the data is normally distributed, as well as look at its skew.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Shapiro-Wilk normality test
+
+data:  df_team_totals$ShotAttemptsFor
+W = 0.97291, p-value = 0.5832</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.2875302</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] -0.1121519</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Goodness-of-fit statistics
+                             1-mle-norm 2-mle-gamma 3-mle-lnorm
+Kolmogorov-Smirnov statistic 0.11073958  0.11608965  0.11944849
+Cramer-von Mises statistic   0.06265581  0.06109229  0.06102607
+Anderson-Darling statistic   0.38101859  0.36336270  0.35935704
+
+Goodness-of-fit criteria
+                               1-mle-norm 2-mle-gamma 3-mle-lnorm
+Akaike's Information Criterion   551.3926    551.0638    550.9657
+Bayesian Information Criterion   554.3241    553.9953    553.8972</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="NHL_Shot_Analysis_TS_files/figure-html/tests[7]-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The <code>Shapiro-Wilkes Test</code> returned a <span class="math inline">\(p-value \approx 0.58\)</span>, so we can conclude the <span class="math inline">\(H_0\)</span> of its test that the data is normally distributed.</p>
+<p>The <code>skewness</code> test returned <span class="math inline">\(0.29\)</span> showing a slightly-positive (right-tailed) skew, but nothing completely out of the ordinary, while the <code>kurtosis</code> test returned <span class="math inline">\(-0.11\)</span>, slightly lower than a normal distribution at <span class="math inline">\(0\)</span>, but practically normal.</p>
+<p>The <code>Kolmogorov-Smirnov</code> statistic shows that the normal distribution’s <span class="math inline">\(CDF\)</span> fits the data best. Both the <code>CvM</code> and <code>Anderson-Darling</code> statistics show the other distributions might be marginally better, but since the difference is marginal, a normal distribution likely still fits the data best and at the very least most simply.</p>
+<p>The <code>AIC</code> and <code>BIC</code> figures while technically favoring the other types of distributions, really don’t show a significant statistical difference between the three.</p>
+<p>Finally, the diagnostic plots also confirm normally distributed data. Although we see some slight skew, these all confirm the data is fairly normally distributed.</p>
+<p>We can also expect that as more game data is added, this distribution will likely become more normal over time.</p>
+<p>This matters for our eventual time series modelling as it hints that the residuals might be normal as well, meaning the model’s error term behaves like white noise where <span class="math inline">\(w_t\sim wN(0,\sigma^2_w)\)</span>.</p>
+</section>
+</section>
+<section id="time-series-modeling" class="level1">
+<h1>Time Series Modeling</h1>
+<p>Finally, the good stuff.</p>
+<p>Below is a <code>Time Series</code> plot of the average shot attempts across the four training-data seasons (2021-2024) for each game 1-82.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="NHL_Shot_Analysis_TS_files/figure-html/tests[8]-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>This chart shows a fairly stable time series with random fluctuations and no visible seasonality component.</p>
+<section id="stationarity" class="level2">
+<h2 class="anchored" data-anchor-id="stationarity">Stationarity</h2>
+<p>Using R’s functionality, we can make some stationarity checks and use <code>ndiffs</code> to see if an <code>ARIMA(p,d,q)</code> model might make sense.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Augmented Dickey-Fuller Test
+
+data:  y
+Dickey-Fuller = -7.0972, Lag order = 0, p-value = 0.01
+alternative hypothesis: stationary</code></pre>
+</div>
+</div>
+<p>The <code>Augmented Dickey-Fuller</code> test for stationarity returned a <span class="math inline">\(p-value&lt;\alpha\)</span> where <span class="math inline">\(\alpha = 0.05\)</span>, concluding the <span class="math inline">\(H_a:Stationarity\)</span>.</p>
+<p>The <code>ndiffs</code> function returns the recommended <em>regular differences</em> <code>d</code> needed to make the series stationary. Returning <span class="math inline">\(d=0\)</span> means that none are needed and some sort of <span class="math inline">\(ARMA(p,q)\)</span> model can be used.</p>
+</section>
+<section id="model-selection" class="level2">
+<h2 class="anchored" data-anchor-id="model-selection">Model Selection</h2>
+<p>We can use the <code>auto.arima</code> function with params <code>d=0</code>, <code>max.p=12</code> and <code>max.q=12</code> to test different <code>ARMA(p,q)</code> models with parameters <span class="math inline">\(p \in [0,12]\)</span> and <span class="math inline">\(q \in [0,12]\)</span>:</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="NHL_Shot_Analysis_TS_files/figure-html/arma[10]-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The <code>Q-Q Plot</code> shows the residuals are almost exactly normally distributed. The model captures virtually all non-white noise data very well.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="NHL_Shot_Analysis_TS_files/figure-html/residuals[11]-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Ljung-Box test
+
+data:  Residuals from ARIMA(1,0,0) with non-zero mean
+Q* = 7.9388, df = 9, p-value = 0.5403
+
+Model df: 1.   Total lags used: 10</code></pre>
+</div>
+</div>
+<p>We can see one small lag spike around <span class="math inline">\(k=11\)</span>, but everything looks reasonable with this.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: y_ts 
+ARIMA(1,0,0) with non-zero mean 
+
+Coefficients:
+         ar1     mean
+      0.2284  58.7863
+s.e.  0.1092   0.1236
+
+sigma^2 = 0.77:  log likelihood = -104.65
+AIC=215.31   AICc=215.61   BIC=222.53
+
+Training set error measures:
+                       ME      RMSE       MAE         MPE     MAPE      MASE
+Training set -0.004306545 0.8667462 0.7046645 -0.02903882 1.198698 0.7736908
+                    ACF1
+Training set -0.01303734</code></pre>
+</div>
+</div>
+<p>The model’s output returns <span class="math inline">\(\mu=58.78\)</span> and an <span class="math inline">\(AR(1)\)</span> parameter of <span class="math inline">\(\phi \approx 0.22\)</span>, which is the preferred model type for this data.</p>
+<p>An <span class="math inline">\(AR(1)\)</span> model has the following equation:</p>
+<p><span class="math inline">\(x_t=c+\phi x_{t-1}+w_t\rightarrow58.78+0.22(Bx-58.78)+w_t\approx 45.84+Bx+w_t\)</span></p>
+</section>
+<section id="forecasting" class="level2">
+<h2 class="anchored" data-anchor-id="forecasting">Forecasting</h2>
+<p>With an <span class="math inline">\(AR(1)\)</span> model that uses the full 2021-2024 seasons as training data, we can use the testing data that is the first 8 games of the 2025 season to see how well it can forecast what’s happened already this season.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="NHL_Shot_Analysis_TS_files/figure-html/forecast[13]-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>A more zoomed-in look at the forecast:</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="NHL_Shot_Analysis_TS_files/figure-html/forecastZoom[14]-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Other than the point at <span class="math inline">\(gameNumber=4\)</span>, all of the points fall within the <span class="math inline">\(95\%\)</span> Confidence Interval of the forecasted section. This <span class="math inline">\(AR(1)\)</span> model really fits the data extremely well.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1.165243</code></pre>
+</div>
+</div>
+<p>Checking the <em>Test RMSE</em> for good measure, a value of <span class="math inline">\(\approx 1.17\)</span> shows that the model’s <code>shot attempt</code> forecast is about <span class="math inline">\(\pm 1.17\)</span> on average, which translates to the average model prediction being about <span class="math inline">\(\frac {1.17} {57.89} \approx 0.02 \rightarrow 2\%\)</span> off.</p>
+</section>
+</section>
+<section id="conclusion" class="level1">
+<h1>Conclusion</h1>
+<p>After testing the data itself for normality, followed by the residuals of the best-fit model, we have a <em>weakly stationary</em> <span class="math inline">\(AR(p=1)\)</span> model with parameters <span class="math inline">\(\phi = 0.22\)</span> and <span class="math inline">\(\mu=58.79\)</span>, which returned an equation of <span class="math inline">\(x_t = 45.84+Bx+w_t\)</span>. It has a stable mean and variance, so a time series model suits the data well.</p>
+<p>It was able to forecast decently well, with <span class="math inline">\(7/8\)</span> of the test points falling within the <span class="math inline">\(95\%\)</span> confidence interval of the forecast line, with the one outlier being barely outside of it.</p>
+<section id="next-steps" class="level2">
+<h2 class="anchored" data-anchor-id="next-steps">Next Steps</h2>
+<p>Potential next-steps for this project include:</p>
+<ul>
+<li>Creating a dashboard with game forecasts and using it to update <code>gameNumber</code> averages as the season goes on</li>
+<li>Figure out a way to include playoffs</li>
+<li>Use regression analysis to see if Shot Attempts are increasing or staying the same</li>
+</ul>
+</section>
+<section id="do-the-gritty" class="level2">
+<h2 class="anchored" data-anchor-id="do-the-gritty">Do the Gritty</h2>
+<figure style="text-align: center;" class="figure">
+<img src="https://media.giphy.com/media/Qv4Jw8utQgYTUKnyo6/giphy.gif" alt="Gritty" class="figure-img">
+<figcaption>
+When you stare into the void, the void stares back. Credit NHL on Giphy
+</figcaption>
+</figure>
 
 
 </section>
