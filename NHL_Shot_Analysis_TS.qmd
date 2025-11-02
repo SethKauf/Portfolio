@@ -116,7 +116,7 @@ conflict_prefer("select", "dplyr")
 
 The below data has been filtered and had some renaming done for visual purposes, but is more-or-less the raw data that was pulled from MoneyPuck.
 
-```{r moneypuck[1], echo=FALSE,message=FALSE,warning=FALSE}
+```{r moneypuck[1], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 # read in data
 df <- read.csv("data/TS1/nhl_shot_attempts_2020_2025.csv")
@@ -200,7 +200,7 @@ What this means is, for each team's game 1, or game 2, 3... 82 (e.g.: $gameNumbe
 
 So as an example, below we see the first game of each season (excluding 2025 since it's not included in the training data) for the *Los Angeles Kings*:
 
-```{r lak[2], echo=FALSE,message=FALSE,warning=FALSE}
+```{r lak[2], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 # create game numbers df
 df_gn <- df |>
@@ -293,7 +293,7 @@ So, across the four $GameNumber=1$ for the *Los Angeles Kings*, $\mu\approx65.2$
 
 Doing this for every team, then averaging those values, we get the following:
 
-```{r league_gn[3], echo=FALSE,message=FALSE,warning=FALSE}
+```{r league_gn[3], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 # aggregate all game numbers
 league_gn <- df_gn |>
@@ -365,7 +365,7 @@ Before performing any Time Series modeling, I wanted to see if we could gain any
 
 ## Shot Attempt Volume
 
-```{r eda[4], echo=FALSE,message=FALSE,warning=FALSE}
+```{r eda[4], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 #| fig-width: 10
 #| fig-height: 6
@@ -467,7 +467,7 @@ This `stacked bar/proportion` chart gives us an idea of the volume of `shot atte
 ## Top 10
 Next I looked at `shots on goal` to `shot attempts` and `goals for` to `shot attempts` and ranked the top 10 in each, along with their respective win % (how many Regulation/OT Wins, not including shootout wins).
 
-```{r wins[5], echo=FALSE,message=FALSE,warning=FALSE}
+```{r wins[5], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 #| fig-width: 10
 #| fig-height: 6
@@ -574,7 +574,7 @@ It's interesting that `shots on goal / shot attempts` tends to favor teams with 
 ## Shot Attempt Distribution
 The below histogram and tests show the distribution of `shot attmepts` over a :
 
-```{r distribution[6], echo=FALSE,message=FALSE,warning=FALSE}
+```{r distribution[6], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 #| fig-width: 10
 #| fig-height: 6
@@ -613,7 +613,7 @@ The distribution looks to be fairly normal.
 
 Running a few tests we can ensure the data is normally distributed, as well as look at its skew.
 
-```{r tests[7], echo=FALSE,message=FALSE,warning=FALSE}
+```{r tests[7], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 
 shapiro.test(df_team_totals$ShotAttemptsFor)
@@ -658,7 +658,7 @@ Finally, the good stuff.
 
 Below is a `Time Series` plot of the average shot attempts across the four training-data seasons (2021-2024) for each game 1-82.
 
-```{r tests[8], echo=FALSE,message=FALSE,warning=FALSE}
+```{r tests[8], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 #| fig-width: 10
 #| fig-height: 6
@@ -697,7 +697,7 @@ This chart shows a fairly stable time series with random fluctuations and no vis
 ## Stationarity
 Using R's functionality, we can make some stationarity checks and use `ndiffs` to see if an `ARIMA(p,d,q)` model might make sense.
 
-```{r arima[9], echo=FALSE,message=FALSE,warning=FALSE}
+```{r arima[9], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 y <- league_gn$avg_safor
 y_ts <- ts(y, frequency = 1)
@@ -715,7 +715,7 @@ The `ndiffs` function returns the recommended *regular differences* `d` needed t
 
 We can use the `auto.arima` function with params `d=0`, `max.p=12` and `max.q=12` to test different `ARMA(p,q)` models with parameters $p \in [0,12]$ and $q \in [0,12]$:
 
-```{r arma[10], echo=FALSE,message=FALSE,warning=FALSE}
+```{r arma[10], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 #| fig-width: 10
 #| fig-height: 6
@@ -738,7 +738,7 @@ qqline(resid_arma, col = "maroon", lwd = 2)
 
 The `Q-Q Plot` shows the residuals are almost exactly normally distributed. The model captures virtually all non-white noise data very well.
 
-```{r residuals[11], echo=FALSE,message=FALSE,warning=FALSE}
+```{r residuals[11], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 #| fig-width: 10
 #| fig-height: 6
@@ -748,7 +748,7 @@ checkresiduals(fit_arma)
 
 We can see one small lag spike around $k=11$, but everything looks reasonable with this.
 
-```{r model[12], echo=FALSE,message=FALSE,warning=FALSE}
+```{r model[12], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 
 summary(fit_arma)
@@ -764,7 +764,7 @@ $x_t=c+\phi x_{t-1}+w_t\rightarrow58.78+0.22(Bx-58.78)+w_t\approx 45.84+Bx+w_t$
 
 With an $AR(1)$ model that uses the full 2021-2024 seasons as training data, we can use the testing data that is the first 8 games of the 2025 season to see how well it can forecast what's happened already this season.
 
-```{r forecast[13], echo=FALSE,message=FALSE,warning=FALSE}
+```{r forecast[13], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 #| fig-width: 10
 #| fig-height: 6
@@ -821,7 +821,7 @@ ggplot(fcast_df, aes(x = game_no)) +
 
 A more zoomed-in look at the forecast:
 
-```{r forecastZoom[14], echo=FALSE,message=FALSE,warning=FALSE}
+```{r forecastZoom[14], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 #| fig-width: 10
 #| fig-height: 6
@@ -877,7 +877,7 @@ ggplot(fcast_df, aes(x = game_idx)) +
 
 Other than the point at $gameNumber=4$, all of the points fall within the $95\%$ Confidence Interval of the forecasted section. This $AR(1)$ model really fits the data extremely well.
 
-```{r rmse[15], echo=FALSE,message=FALSE,warning=FALSE}
+```{r rmse[15], echo=TRUE,message=FALSE,warning=FALSE}
 #| code-fold: TRUE
 rmse <- sqrt(mean((x_test$avg_safor - fcast_2025$mean)^2, na.rm = TRUE))
 rmse
