@@ -6,7 +6,7 @@ css: styles.css
 
 # Introduction
 
-A popular sport in both North America and Europe, ice hockey is considered one of the fastest and most difficult team games to play.
+A popular sport in North America and Europe that is growing globally, ice hockey is considered one of the fastest and most difficult team games to play.
 
 In North America, the largest ice hockey league is the *National Hockey League* or *NHL*. It is a league comprised of 32 teams, 25 in the U.S. and 7 in Canada, all of whom compete each year to lift what some consider the greatest trophy in sports, the Stanley Cup.
 
