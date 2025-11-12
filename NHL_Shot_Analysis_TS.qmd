@@ -17,7 +17,7 @@ In North America, the largest ice hockey league is the *National Hockey League* 
 The basic rules of hockey are as follows:
 
 * Each team can have a maximum of 5 players plus a goaltender on the ice at any given time
-  - This can change based on whether a team has taken a penalty (infraction), or has pulled their goaltender for an extra attacked
+  - This can change based on whether a team has taken a penalty (infraction), or has pulled their goaltender for an extra attacker
 * You win by scoring more goals than the other team
   - A goal is when the puck, the small black object made of vulcanized rubber, crosses the goal line and into the net
   - There is an exception to this rule in the regular season, you can win in a shootout, which doesn't count as a goal
