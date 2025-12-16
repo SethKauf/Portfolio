@@ -1339,7 +1339,7 @@ interactive_plot <- interactive_plot |>
 interactive_plot
 ```
 
-As we can see, the electoral votes get a lot closer in general with third-parties getting involved a bit. One election that in the current system appeared to be a rout, 1992, is actually a lot closer than previously though, though the Democrats would still hang on to win it 254 - 207, with 77 votes going to Independent Ross Perot. 1984 and 2008 are still landslides, but maybe they don't look as bad this way?
+As we can see, the electoral votes get a lot closer in general with third-parties getting involved a bit. One election that in the current system appeared to be a rout, 1992, is actually a lot closer than previously thought, though the Democrats would still hang on to win it 254 - 207, with 77 votes going to Independent Ross Perot. 1984 and 2008 are still landslides, but maybe they don't look as bad this way?
 
 Finally, the big question, does any election flip in this system?
 

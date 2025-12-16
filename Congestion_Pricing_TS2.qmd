@@ -358,7 +358,7 @@ Since this is reading data on regular time intervals, we should expect that a lo
 
 For example, the count of records per day should be the exact same every day for all $336$ days in this dataset:
 
-$1\space day \space \times 24 \space hours \times 6 \space ten \space minute \space intervals \times 6 \space vehicle \space groups \times 12 \space detection \space groups = 10,368$:
+$1\space day \space \times 24 \space hours \times 6 \space ten \space minute \space intervals \times 6 \space vehicle \space groups \times 12 \space detection \space groups = 10,368$
 
 ```{r date_counts[5], echo=TRUE, message=FALSE, warning=FALSE}
 #| code-fold: true
