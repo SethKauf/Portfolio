@@ -1,0 +1,1262 @@
+---
+title: "Congestion Pricing TimeSeries"
+format: html
+css: styles.css
+---
+```{r python_setup, echo=FALSE, message=FALSE, warning=FALSE}
+PYTHON_PATH <- Sys.getenv("PYTHON_LSTM")
+
+Sys.setenv(RETICULATE_PYTHON = PYTHON_PATH)
+
+library(reticulate)
+
+use_condaenv("lstm", required = TRUE)
+
+if (interactive()) py_config()
+```
+# Introduction
+
+On January 5, 2025, New York City's [Congestion Pricing Program](https://www.nytimes.com/2025/01/04/nyregion/congestion-pricing-nyc.html) went into effect, where vehicles would be tolled for entering Manhattan's *Congestion Relief Zone* (**CRZ**) with a vehicle. This toll is \$9 during peak period (5AM to 9PM on weekdays) and \$2.25 otherwise. The debates over congestion pricing, its enacting and its merits are still ongoing today, the fact remains it's currently in place, with plans to gradually increase the tolls over the next 6 years until it caps out at \$15 in 2031.[^mta]:
+
+[^mta]: [MTA Congestion Pricing Plan](https://congestionreliefzone.mta.info/tolling)
+
+The *Central Business District* (**CBD**) Tolling Plan charges vehicles entering the **CRZ**, defined by the MTA as:
+
+> ...streets and avenues at or below 60 St but does not include
+> the Franklin D. Roosevelt (FDR) Drive and the West Side Highway/Route 9A, including
+> the Battery Park Underpass and any surface roadway portion of the Hugh L. Carey Tunnel that connects
+> to West Street (the West Side Highway/Route 9A). Roads not included in the tolling program are
+> referred to as “excluded roadways”. The program is intended to relieve congestion in the most
+> congested district in the United States.[^overview]:
+
+[^overview]: [MTA Congestion Relief Zone Information PDF](https://data.ny.gov/api/views/t6yz-b64h/files/f8790b33-dd3f-4253-8c77-c808c75b2627?download=true&filename=MTA_CongestionReliefZoneVehicleEntries_Overview.pdf)
+
+Below is a general map of the **CRZ**, though it does not exclude the MTA's exclusion zones above because coding this was hard enough as-is.
+
+```{r CRZ_Map[0], echo=FALSE, message=FALSE, warning=FALSE}
+#if (!require("dplyr")) install.packages("dplyr")
+#if (!require("leaflet")) install.packages("leaflet")
+#if (!require("sf")) install.packages("sf")
+#if (!require("tigris")) install.packages("tigris")
+
+
+
+library(dplyr)
+library(leaflet)
+library(sf)
+library(tigris)
+
+
+options(tigris_use_cache = TRUE)
+
+# Helper function to rotate the Simple Feature Collection (SFC -- a collection of geometries, e.g.: several lines) by an angle (in radians) around a center point (same Coordinate Reference System (CRS))
+rotate_sfc <- function(x_sfc, angle, center_xy) {
+  
+  rotate_sfg <- function(g) {
+    coords <- sf::st_coordinates(g)
+    if (nrow(coords) == 0) return(g)
+    
+    cx <- center_xy[1]; cy <- center_xy[2]
+    x <- coords[, "X"] - cx
+    y <- coords[, "Y"] - cy
+    
+    xr <- x * cos(angle) - y * sin(angle) + cx
+    yr <- x * sin(angle) + y * cos(angle) + cy
+    
+    coords[, "X"] <- xr
+    coords[, "Y"] <- yr
+    
+    gt <- as.character(sf::st_geometry_type(g, by_geometry = TRUE))
+    
+    if (gt == "LINESTRING") {
+      return(sf::st_linestring(coords[, c("X","Y")]))
+    }
+    
+    if (gt == "POLYGON") {
+      rings <- split(seq_len(nrow(coords)), coords[, "L1"])
+      ring_list <- lapply(rings, function(ix) coords[ix, c("X","Y"), drop=FALSE])
+      return(sf::st_polygon(ring_list))
+    }
+    
+    if (gt == "MULTIPOLYGON") {
+      polys <- split(seq_len(nrow(coords)), coords[, "L1"])
+      poly_list <- lapply(polys, function(ix_poly) {
+        sub <- coords[ix_poly, , drop=FALSE]
+        rings <- split(seq_len(nrow(sub)), sub[, "L2"])
+        lapply(rings, function(ix_ring) sub[ix_ring, c("X","Y"), drop=FALSE])
+      })
+      return(sf::st_multipolygon(poly_list))
+    }
+    
+    stop("Geometry type not handled: ", gt)
+  }
+  
+  out <- lapply(sf::st_geometry(x_sfc), rotate_sfg)
+  sf::st_sfc(out, crs = sf::st_crs(x_sfc))
+}
+
+# polygon of Manhattan (New York County)
+manhattan <- tigris::counties(state = "NY", cb = TRUE, year = 2023) |>
+  filter(COUNTYFP == "061") |>
+  # WGS crs coordinates for Manhattan
+  st_transform(4326)
+
+parts <- st_cast(manhattan, "POLYGON")
+manhattan_main <- parts[which.max(st_area(parts)), ] |> st_as_sf()
+
+# diagonal cutoff line endpoints
+p_w <- c(-74.0068, 40.7727)
+p_e <- c(-73.9525, 40.7636)
+cut_line <- st_sfc(st_linestring(rbind(p_w, p_e)), crs = 4326)
+
+# prevents South St Seaport cutoff
+bb <- st_bbox(manhattan_main)
+xmin <- as.numeric(bb[["xmin"]]); xmax <- as.numeric(bb[["xmax"]])
+ymin <- as.numeric(bb[["ymin"]]); ymax <- as.numeric(bb[["ymax"]])
+
+pad_x <- (xmax - xmin) * 2
+pad_y <- (ymax - ymin) * 2
+
+xmin2 <- xmin - pad_x
+xmax2 <- xmax + pad_x
+ymin2 <- ymin - pad_y
+
+y_at_x <- function(x, p1, p2) {
+  x1 <- p1[1]; y1 <- p1[2]
+  x2 <- p2[1]; y2 <- p2[2]
+  y1 + (y2 - y1) * (x - x1) / (x2 - x1)
+}
+
+y_left  <- y_at_x(xmin2, p_w, p_e)
+y_right <- y_at_x(xmax2, p_w, p_e)
+
+south_poly <- st_sfc(
+  st_polygon(list(rbind(
+    c(xmin2, ymin2),
+    c(xmax2, ymin2),
+    c(xmax2, y_right),
+    c(xmin2, y_left),
+    c(xmin2, ymin2)
+  ))),
+  crs = 4326
+)
+
+# Rotate in projected CRS, clip/bisect shape, and return to WGS84 (global standard coordinate)
+crs_proj <- 2263
+
+man_proj  <- st_transform(manhattan_main, crs_proj)
+line_proj <- st_transform(cut_line, crs_proj)
+poly_proj <- st_transform(south_poly, crs_proj)
+
+pivot_ll <- st_sfc(st_point(c(-73.9855, 40.7580)), crs = 4326) |>
+  st_transform(crs_proj)
+pivot_xy <- as.numeric(st_coordinates(pivot_ll)[1, c("X","Y")])
+
+theta <- -0.25  # angle rotation for cutoff line
+
+line_rot <- rotate_sfc(line_proj, theta, pivot_xy)
+poly_rot <- rotate_sfc(poly_proj, theta, pivot_xy)
+
+below_60_rot <- st_intersection(man_proj, poly_rot)
+
+below_60  <- st_transform(below_60_rot, 4326)
+#cut_line2 <- st_transform(line_rot, 4326)
+
+bb2 <- st_bbox(below_60)
+
+# Leaflet overlay
+leaflet() |>
+  addProviderTiles(providers$CartoDB.Positron) |>
+  addPolygons(data = manhattan_main, fill = FALSE,
+              color = "black", weight = 2, opacity = 0.8) |>
+  # excess code adds another line
+  #addPolylines(data = cut_line2, color = "forestgreen",
+   #            weight = 3, opacity = 0.9) |>
+  addPolygons(data = below_60,
+              fillColor = "darkblue", fillOpacity = 0.25,
+              color = "forestgreen", weight = 2) |>
+  fitBounds(bb2[["xmin"]], bb2[["ymin"]],
+            bb2[["xmax"]], bb2[["ymax"]])
+```
+
+## Note
+
+If you've visited this page before, you might have noticed that this is my second attempt at this project. The first used [NYC DOT Automated Traffic Volume Counts](https://data.cityofnewyork.us/Transportation/Automated-Traffic-Volume-Counts/7ym2-wayt/about_data) from **NYC Open Data**. The goal was to see if there was a noticeable shift in traffic volume since Congestion Pricing's implementation, especially at the *peak* times. Unfortunately, this data is extremely sparse (multiple gaps of 200+ days) and had at least several severe errors, including severely mislabeled data (e.g.: traffic volume counts dated a month in the future for a sensor in Brooklyn). I submitted a note to NYC Open Data about this on or around October 27, 2025. As of writing on December 13, 2025, I have not received a response.
+
+Looking on the NYC Open Portal site and checking the data today, the Metadata's last update was December 9, 2025 while the data itself hasn't been updated since September 20, 2025. The data that had been in error in the past still had the same values (specifically DeKalb Avenue on December 9th).
+
+## Dataset
+For this project I used New York Metropolitan Transportation Authority (**MTA**) data on New York State's Open Data Portal: [MTA Congestion Relief Zone Vehicle Entries: Beginning 2025](https://data.ny.gov/Transportation/MTA-Congestion-Relief-Zone-Vehicle-Entries-Beginni/t6yz-b64h/about_data).
+
+```{r libraries[1], echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+# packages
+#if (!require("httr2")) install.packages("httr2")
+#if (!require("jsonlite")) install.packages("jsonlite")
+#if (!require("purrr")) install.packages("purrr")
+
+#libraries
+library(httr2)
+library(jsonlite)
+library(purrr)
+```
+
+The dataset as of today (December 13, 2025) has $\approx 3.48$ million records. The below loop pulled this data in.
+
+```{r data_pull[2], echo=TRUE, message=FALSE, warning=FALSE}
+#| eval: false
+url <- "https://data.ny.gov/resource/t6yz-b64h.json"
+
+# SODA max is 50,000 rows per request
+chunk_size <- 50000
+
+get_chunk <- function(offset) {
+  request(url) |>
+    req_url_query(
+      `$limit` = chunk_size,
+      `$offset` = offset
+    ) |>
+    req_perform() |>
+    resp_body_json(simplifyVector = TRUE)
+}
+
+# Download in chunks
+offset <- 0
+chunks <- list()
+
+repeat {
+  message("Fetching rows ", offset + 1, "–", offset + chunk_size, " ...")
+  
+  d <- get_chunk(offset)
+  
+  if (length(d) == 0) {
+    message("Done — no more rows.")
+    break
+  }
+  
+  # Convert to tibble and store
+  chunks[[length(chunks) + 1]] <- as_tibble(d)
+  
+  offset <- offset + chunk_size
+}
+
+# Combine everything
+df_all <- bind_rows(chunks)
+```
+
+For reproducibility, I simply saved it as a *.csv* file.
+
+# Exploratory Data Analysis
+
+Below is the raw data with some touching-up for visual purposes.
+
+```{r dataread[3], echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+df <- read.csv("data/TS2/congestion_data.csv")
+
+# just view a little bit of the dataset
+df_trunc <- df[1:100,]
+
+df_trunc <- df_trunc |>
+  mutate(
+    `Day of Week` = paste(day_of_week_int, "-", day_of_week)
+  ) |>
+  select(
+    -minute_of_hour,
+    -hour_of_day,
+    -day_of_week_int,
+    -day_of_week,
+    -toll_week,
+  ) |>
+  select(
+    toll_date,
+    toll_hour,
+    toll_10_minute_block,
+    `Day of Week`,
+    time_period,
+    vehicle_class,
+    detection_region,
+    detection_group,
+    crz_entries,
+    excluded_roadway_entries
+  ) |>
+  rename(
+    `Toll Date` = toll_date,
+    `Toll Hour` = toll_hour,
+    `Toll_10_Minute Block` = toll_10_minute_block,
+    `Time Period` = time_period,
+    `Vehicle Class` = vehicle_class,
+    `Detection Region` = detection_region,
+    `Detection Group` = detection_group,
+    `CRZ Entries` = crz_entries,
+    `Excluded Roadway Entries` = excluded_roadway_entries
+  )
+
+DT::datatable(df_trunc,
+              options = list(dom = "tip", pageLength = 6),
+              rownames = FALSE
+)
+```
+
+The features are:
+
+* `Toll Date`: Date of the Toll
+* `Toll Hour`: Hour of the toll
+* `Toll_10_Minute Block`: 10 minute block (most specific timestamp in the dataset)
+* `Day of Week`: Which day of the week the toll occurred on (`1` = Sunday, `7` = Saturday)
+* `Time Period`: Whether the toll occurred at `Peak` or `Overnight`
+* `Vehicle Class`: Type of vehicle entering the **CRZ**
+  - Taxis and other TLC/FHV vehicles are counted in a separate way from other commercial/commuter traffic
+* `Detection Region`: General region of entry at toll's timestamp
+* `Dettection Group`: Specific area of entry at toll's timestamp
+* `CRZ Entries`: How many entries of a certain `Vehicle Class` occurred at a certain `Time Period`
+* `Excluded Roadway Entries`: How many entries entered the **CBD** but stayed on excluded roadways (e.g.: the FDR)
+
+## Data Information
+
+This information synthesizes the main points from the *MTA*'s Overview and Data Dictionary.
+
+Each plate/transpoder is counted only once per entry, so if a vehicle enters via the `Detection Group = Brooklyn Bridge` and is on the `FDR Drive at 60th St` 30 minutes later, it is not counted a second time.
+
+The counts are divided into two categories: `CRZ Entries` who enter the tolled zones and `Excluded Roadway Entires` who stay on the excluded roads such as the `FDR Drive at 60th St`.
+
+The `Time Period` is divided on `Peak` and `Overnight` as described in the introduction.
+
+Finally, `Detection Region` is broken out into different `Detection Group`:
+
+```{r detection_groups[4], echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+
+library(scales)
+
+# counts of groups within regions
+counts <- df |>
+  count(detection_region, detection_group) |>
+  arrange(detection_region, detection_group) |>
+  rename(
+    `Detection Region` = detection_region,
+    `Detection Group` = detection_group,
+    `Counts` = n
+  )
+
+# add scales/commas
+counts <- counts |>
+  mutate(Counts = comma(Counts))
+
+# datatable for visual niceness
+DT::datatable(counts,
+              options = list(dom = "tip", pageLength = 12),
+              rownames = FALSE
+)
+```
+
+## Data Integrity
+
+Although the *MTA* generally has a good record when it comes to their data, it's still always good to check that the data looks as we expect it to.
+
+Since this is reading data on regular time intervals, we should expect that a lot of grouped values line up.
+
+For example, the count of records per day should be the exact same every day for all $336$ days in this dataset:
+
+$1\space day \space \times 24 \space hours \times 6 \space ten \space minute \space intervals \times 6 \space vehicle \space groups \times 12 \space detection \space groups = 10,368$:
+
+```{r date_counts[5], echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+
+
+counts <- df |>
+  count(toll_date)
+
+counts |>
+  summarize(
+    `Total Records` = length(n),
+    `Minimum Count` = comma(min(n)),
+    `Mean Count` = comma(mean(n)),
+    `Max Count` = comma(max(n))
+  )
+```
+
+The above table confirms exactly what we'd expect to see in this dataset.
+
+## Data Limitations
+
+In the hyperlinked *.pdf* document from the **MTA**, they describe the main limitations of the dataset. Below are the main takeaways from it are:
+
+* The dataset should not be used to calculate any revenue related to the program as it does not contain financial information including exemption status or repeat entries
+* The only vehicles counted are those with an identifiable license plate or E-ZPass transpoder
+* Numbers from recent days may be further revised as additional trip data, or input from the Congestion Pricing Customer Support Center is processed
+
+<div class="center-image" style="text-align: center;">
+![New York State Transpoder, via AAA Western and Central New York](images/ts2/nys_transpoder.jpg)
+
+</div>
+
+## Vehicle Distribution
+
+I next wanted to view some basic distributions within the dataset.
+
+First were the distribution of vehicle types by the volume of entries (`CRZ Entries` + `Excluded Roadway Entries`).
+
+```{r vehicle_distribution[6], fig.width=14, fig.height=5, echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+#if (!require("ggplot2")) install.packages("ggplot2")
+library(ggplot2)
+
+df |>
+  group_by(vehicle_class) |>
+  summarize(total_entries = sum(crz_entries, na.rm = TRUE)) |>
+  ggplot(aes(x = reorder(vehicle_class, total_entries),
+             y = total_entries)) +
+  geom_col(fill = "#F1948A") +
+  scale_x_discrete(limits = rev) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(
+    title = "CRZ Entries by Vehicle Class",
+    x = "Vehicle Class",
+    y = "Total CRZ Entries"
+  ) +
+  theme_minimal() +
+  theme(plot.background = element_rect(fill = "#0b1e39", color = NA),
+        panel.background = element_rect(fill = "#0b1e39", color = NA),
+        
+        plot.title = element_text(color = "white",  hjust = 0.5, face = "bold"),
+        axis.title = element_text(color = "white"),
+        axis.text.x = element_text(color = "white", angle = 45, hjust = 1),
+        axis.text.y = element_text(color = "white"),
+        
+        panel.grid.major = element_line(color = "gray50", linewidth = 0.3),
+        panel.grid.minor = element_line(color = "gray50", linewidth = 0.2),
+        
+        panel.border = element_blank())
+```
+
+This shows that commuter or small-business type vehicles make up the bulk of **CBD** traffic, with $\approx 113$ million records, followed by TLC Taxis/For-Hire Vehicles with $\approx 65$ million records.
+
+
+The final three categories combine for $\approx 10$ million records.
+
+Because the data is looking specifically at traffic volumes and each vehicle is only counted once per entry, these will all be aggregated down the line, but further analysis on the individual vehicle types can be interesting.
+
+## TimeSeries
+
+Below are three TimeSeries plots of `CRZ Entries`, `Excluded Roadway Entries` and a combined column `Traffic Volume`.
+
+For this general graph, I only look at it on a daily level.
+
+```{r traffic_volume_ts[7], fig.width=14, fig.height=5, echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+
+#### Timeseries
+#if (!require("lubridate")) install.packages("lubridate")
+library(lubridate)
+
+# get actual day of toll as string then as date
+df <- df |>
+  mutate(
+    toll_day = as.Date(substr(toll_date,1,10)),
+    traffic_volume = crz_entries + excluded_roadway_entries
+  )
+
+# aggr sums on day
+daily_sums <- df |>
+  group_by(toll_day) |>
+  summarise(
+    crz = sum(crz_entries),
+    ere = sum(excluded_roadway_entries),
+    tv = sum(traffic_volume)
+  )
+
+###### CRZ entries
+ggplot(data=daily_sums, aes(x = toll_day, y = crz)) +
+  geom_line(color='#F1948A') +
+  labs(title = "Daily Congestion Relief Zone Entries",
+       x = "Date",
+       y = "Count"
+       ) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background  = element_rect(fill = "#0b1e39", color = NA),
+    panel.background = element_rect(fill = "#0b1e39", color = NA),
+    plot.title       = element_text(color = "white", hjust = 0.5, face = "bold"),
+    plot.subtitle    = element_text(color = "white", hjust = 0.5),
+    axis.title       = element_text(color = "white"),
+    axis.text        = element_text(color = "white"),
+    panel.grid.major = element_line(color = "gray50", linewidth = 0.3),
+    panel.grid.minor = element_line(color = "gray30", linewidth = 0.2)
+  )
+
+###### Excluded Roadways entries
+ggplot(data=daily_sums, aes(x = toll_day, y = ere)) +
+  geom_line(color='#F1948A') +
+  labs(title = "Daily Excluded Roadways Entries",
+       x = "Date",
+       y = "Count"
+  ) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background  = element_rect(fill = "#0b1e39", color = NA),
+    panel.background = element_rect(fill = "#0b1e39", color = NA),
+    plot.title       = element_text(color = "white", hjust = 0.5, face = "bold"),
+    plot.subtitle    = element_text(color = "white", hjust = 0.5),
+    axis.title       = element_text(color = "white"),
+    axis.text        = element_text(color = "white"),
+    panel.grid.major = element_line(color = "gray50", linewidth = 0.3),
+    panel.grid.minor = element_line(color = "gray30", linewidth = 0.2)
+  )
+
+###### Total Volume entries
+ggplot(data=daily_sums, aes(x = toll_day, y = tv)) +
+  geom_line(color='#F1948A') +
+  labs(title = "Daily Central Business District (All Roadways) Entries",
+       x = "Date",
+       y = "Count"
+  ) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background  = element_rect(fill = "#0b1e39", color = NA),
+    panel.background = element_rect(fill = "#0b1e39", color = NA),
+    plot.title       = element_text(color = "white", hjust = 0.5, face = "bold"),
+    plot.subtitle    = element_text(color = "white", hjust = 0.5),
+    axis.title       = element_text(color = "white"),
+    axis.text        = element_text(color = "white"),
+    panel.grid.major = element_line(color = "gray50", linewidth = 0.3),
+    panel.grid.minor = element_line(color = "gray30", linewidth = 0.2)
+  )
+```
+
+The above TimeSeries plots show about the same pattern, though a wider volume for `Congestion Zone Entries` relative to `Excluded Roadway Entries`.
+
+All plots show volumes we might expect including large dips in volume on days such as *July 4*.
+
+# Data Selection and Engineering
+
+I am limiting the scope of this project to `Detection Region == Brooklyn` which only will count entryways from Brooklyn. This includes four detection regions:
+
+* Brooklyn Bridge
+* Hugh L. Carey Tunnel
+* Manhattan Bridge
+* Williamsburg Bridge
+
+The scope of this project will focus on finding traffic volume peaks using a *Long Short-Term Memory* or **LSTM** TimeSeries model, described further in the next section.
+
+With this in mind, `Traffic Volume` will be an engineered column of combined `Congestion Zone Entries` and `Excluded Roadway Entries`.
+
+The time intervals for this are half-hour blocks where if the `Toll_10_Minute Block` is `YYYY-DD-MMTHH:00:00.000` through `YYYY-DD-MMTHH:20:00.000` then it is counted as `YYYY-DD-MMTHH:00`, while `YYYY-DD-MMTHH:30:00.000` through `YYYY-DD-MMTHH:50:00.000` is counted as `YYYY-DD-MMTHH:30`.
+
+Finally, because of this limitation of the dataset:
+
+> Numbers from recent days may be further revised as additional trip data, or input from the Congestion Pricing Customer Support Center is processed
+
+I will exclude the 2 most recent weeks of data, so for this project running data ending on `2025-12-06`, the final dataset will span from `2025-01-05` to `2025-11-22`, which is right before Thanksgiving (`2025-11-27`).
+
+## Final Engineered Data
+
+The final modeling dataset looks like this:
+
+```{r data_sample[8], fig.width=14, fig.height=5, echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+
+highest_day <- max(df$toll_day)
+
+removal_date <- highest_day - 14
+
+# modeling data
+data <- df |>
+  filter(
+    detection_region == 'Brooklyn', # only want the best borough
+    toll_day <= removal_date # remove previous 2 weeks of data
+  ) |>
+  select(
+    toll_day,
+    hour_of_day,
+    minute_of_hour,
+    time_period,
+    traffic_volume
+  ) |>
+  group_by(toll_day, hour_of_day, minute_of_hour) |> # first group by to aggregate it to basic time features
+  summarise(
+    traffic_volume = sum(traffic_volume)
+  ) |>
+  mutate(
+    time_block = case_when(
+      minute_of_hour %in% c(0,10,20) ~ 0L, # minute endings of 0,10,20 count in the HH block of 0
+      minute_of_hour %in% c(30,40,50) ~ 30L, # minute endings of 30,40,50 count in the HH block of 30
+      TRUE ~ NA_integer_
+    ),
+    # make timestamp
+    toll_timestamp = make_datetime(
+      year = year(toll_day),
+      month = month(toll_day),
+      day = day(toll_day),
+      hour = hour_of_day,
+      min = time_block
+    )
+  ) |>
+  group_by(
+    toll_timestamp
+  ) |>
+  summarize(
+    traffic_volume = sum(traffic_volume)
+  ) |>
+  select(
+    toll_timestamp,
+    traffic_volume
+  )
+
+# Datatable view
+DT::datatable(
+  data |>
+    mutate(
+      traffic_volume = comma(traffic_volume),
+      toll_timestamp_display = format(
+        toll_timestamp,
+        "%Y-%m-%d %H:%M:%S"
+        )
+      ) |>
+    rename(
+      `Toll Timestamp`=toll_timestamp_display,
+      `Traffic Volume`=traffic_volume
+      ) |>
+    select(
+      `Toll Timestamp`,
+      `Traffic Volume`
+      ) ,
+  options = list(dom = "tip", pageLength = 12),
+  rownames = TRUE
+  )
+```
+
+Which produces this TimeSeries plot:
+
+```{r modeling_data_ts[9], fig.width=14, fig.height=5, echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+ggplot(data=data, aes(x = toll_timestamp, y = traffic_volume)) +
+  geom_line(color='#F1948A') +
+  labs(title = "Traffic Volumes at Half-Hour Intervals",
+       x = "Date",
+       y = "Count"
+       ) +
+  scale_y_continuous(labels = scales::comma) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background  = element_rect(fill = "#0b1e39", color = NA),
+    panel.background = element_rect(fill = "#0b1e39", color = NA),
+    plot.title       = element_text(color = "white", hjust = 0.5, face = "bold"),
+    plot.subtitle    = element_text(color = "white", hjust = 0.5),
+    axis.title       = element_text(color = "white"),
+    axis.text        = element_text(color = "white"),
+    panel.grid.major = element_line(color = "gray50", linewidth = 0.3),
+    panel.grid.minor = element_line(color = "gray30", linewidth = 0.2)
+  )
+```
+```{r time_of_day_summary[10], fig.width=14, fig.height=5, echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+## summary by time-of-day
+data |>
+  mutate(hour = hour(toll_timestamp)) |>
+  group_by(hour) |>
+  summarize(mean_volume = mean(traffic_volume)) |>
+  ggplot(aes(hour, mean_volume)) +
+  geom_line(color='#F1948A') +
+  labs(title = "Average Traffic Volume by Hour of Day",
+       y = "Mean Traffic Volume") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background  = element_rect(fill = "#0b1e39", color = NA),
+    panel.background = element_rect(fill = "#0b1e39", color = NA),
+    plot.title       = element_text(color = "white", hjust = 0.5, face = "bold"),
+    plot.subtitle    = element_text(color = "white", hjust = 0.5),
+    axis.title       = element_text(color = "white"),
+    axis.text        = element_text(color = "white"),
+    panel.grid.major = element_line(color = "gray50", linewidth = 0.3),
+    panel.grid.minor = element_line(color = "gray30", linewidth = 0.2)
+  )
+```
+
+This plot shows the average traffic volume at each hour with the peaks and valleys we might expect on a daily basis, with the highest volumes from 7am - 9am and the lowest from 1am - 3am.
+
+```{r weekly_averages[11], fig.width=14, fig.height=5, echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+## weekly effects
+data |>
+  mutate(wday = wday(toll_timestamp, label = TRUE)) |>
+  group_by(wday) |>
+  summarize(mean_volume = mean(traffic_volume)) |>
+  ggplot(aes(wday, mean_volume)) +
+  geom_col(aes(y = mean_volume), color = "#85C1E9", fill="#F1948A") +
+  labs(title = "Weekday Averages",
+       y = "Average Weekday Volumes",
+       x = "Day of Week") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background  = element_rect(fill = "#0b1e39", color = NA),
+    panel.background = element_rect(fill = "#0b1e39", color = NA),
+    plot.title       = element_text(color = "white", hjust = 0.5, face = "bold"),
+    plot.subtitle    = element_text(color = "white", hjust = 0.5),
+    axis.title       = element_text(color = "white"),
+    axis.text        = element_text(color = "white"),
+    panel.grid.major = element_line(color = "gray50", linewidth = 0.3),
+    panel.grid.minor = element_line(color = "gray30", linewidth = 0.2)
+  )
+```
+
+This bargraph is the average `Traffic Volume` counts for each day of the week throughout the tracked date range. It's interesting how the peaks "build up" throughout the week before dropping between Friday-Saturday-Sunday, while Monday has the lowest average volume.
+
+## Data Diagnostics
+
+The next step is to inspect the data to make several key checks before moving on to any modeling.
+
+```{r rolling_mean_and_sd[12], fig.width=14, fig.height=5, echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+
+#if (!require("zoo")) install.packages("zoo")
+library(zoo)
+
+data |>
+  mutate(roll_mean = rollmean(traffic_volume, 48, fill = NA),
+         roll_sd   = rollapply(traffic_volume, 48, sd, fill = NA)) |>
+  ggplot(aes(toll_timestamp)) +
+  geom_line(aes(y = roll_mean), color = "#F1948A") +
+  geom_line(aes(y = roll_sd), color = "#85C1E9") +
+  labs(title = "Rolling Mean (red) and SD (blue)",
+       y = "Rolling Mean/SD",
+       x = "Toll Timestamp") +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background  = element_rect(fill = "#0b1e39", color = NA),
+    panel.background = element_rect(fill = "#0b1e39", color = NA),
+    plot.title       = element_text(color = "white", hjust = 0.5, face = "bold"),
+    plot.subtitle    = element_text(color = "white", hjust = 0.5),
+    axis.title       = element_text(color = "white"),
+    axis.text        = element_text(color = "white"),
+    panel.grid.major = element_line(color = "gray50", linewidth = 0.3),
+    panel.grid.minor = element_line(color = "gray30", linewidth = 0.2)
+  )
+```
+
+This plot shows the rolling-mean and rolling-average on a 48-lag (daily cycle for half-hour intervals).
+
+The averages show a fairly stable albeit weakly stationary average, with noticeable dips for certain times such as July 4th.
+```{r dicky_fuller[13],echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+#if (!require("tseries")) install.packages("tseries")
+library(tseries)
+## augmented Dicky-Fuller test
+
+adf.test(data$traffic_volume)
+```
+This test confirms what we saw in the Rolling Mean/SD plot, we reject $H_0$ and conclude the $H_a$ of stationarity for the TimeSeries.
+
+```{r acf_pacf[14], fig.width=14, fig.height=5, echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+## autocorrelation/pattern diagnostics
+# ACF
+acf_obj <- acf(data$traffic_volume, lag.max = 200, plot = FALSE)
+
+acf_df <- data.frame(
+  lag = as.numeric(acf_obj$lag[-1]),
+  acf = as.numeric(acf_obj$acf[-1])
+)
+
+ci <- qnorm(0.975) / sqrt(length(data$traffic_volume))
+
+ggplot(acf_df, aes(x = lag, y = acf)) +
+  geom_hline(yintercept = 0, color = "gray70") +
+  geom_linerange(
+    aes(ymin = 0, ymax = acf),
+    color = "#F1948A",
+    linewidth = 0.8
+  ) +
+  geom_hline(
+    yintercept = c(-ci, ci),
+    linetype = "dashed",
+    color = "gray60"
+  ) +
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "ACF of Traffic Volume",
+    x = "Lag",
+    y = "Autocorrelation"
+  ) +
+  theme(
+    plot.background  = element_rect(fill = "#0b1e39", color = NA),
+    panel.background = element_rect(fill = "#0b1e39", color = NA),
+    plot.title       = element_text(color = "white", hjust = 0.5),
+    axis.title       = element_text(color = "white"),
+    axis.text        = element_text(color = "white"),
+    panel.grid.major = element_line(color = "gray50", linewidth = 0.3)
+  )
+
+# PACF
+pacf_obj <- pacf(data$traffic_volume, lag.max = 200, plot = FALSE)
+
+pacf_df <- data.frame(
+  lag = as.numeric(pacf_obj$lag),
+  pacf = as.numeric(pacf_obj$acf)
+)
+
+ci <- qnorm(0.975) / sqrt(length(data$traffic_volume))
+
+ggplot(pacf_df, aes(x = lag, y = pacf)) +
+  geom_hline(yintercept = 0, color = "gray70") +
+  geom_linerange(
+    aes(ymin = 0, ymax = pacf),
+    color = "#F1948A",
+    linewidth = 0.8
+  ) +
+  geom_hline(
+    yintercept = c(-ci, ci),
+    linetype = "dashed",
+    color = "gray60"
+  ) +
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "PACF of Traffic Volume",
+    x = "Lag",
+    y = "Partial Autocorrelation"
+  ) +
+  theme(
+    plot.background  = element_rect(fill = "#0b1e39", color = NA),
+    panel.background = element_rect(fill = "#0b1e39", color = NA),
+    plot.title       = element_text(color = "white", hjust = 0.5),
+    axis.title       = element_text(color = "white"),
+    axis.text        = element_text(color = "white"),
+    panel.grid.major = element_line(color = "gray50", linewidth = 0.3)
+  )
+```
+
+The **ACF** and **PACF** give more insight to the data structure.
+
+There **ACF** indicates strong periodicity (peaks and valleys at roughly the same times in the same lag-window) wwith a clearly repeating pattern.
+
+The **PACF** echoes this showing a large spike at $k=1$ and general strong short-term dependence, as seen around lag $k=48$. This suggests that a shorter lookback model will capture most of the signal.
+
+```{r loess[15], fig.width=14, fig.height=5, echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+#if (!require("FinTS")) install.packages("FinTS")
+#if (!require("forecast")) install.packages("forecast")
+library(FinTS)
+library(forecast)
+
+ts_obj <- ts(data$traffic_volume, frequency = 48)
+
+stl_fit <- stl(ts_obj, s.window = "periodic")
+
+autoplot(stl_fit) +
+  geom_line(color = "#F1948A", linewidth = 0.01) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background  = element_rect(fill = "#0b1e39", color = NA),
+    panel.background = element_rect(fill = "#0b1e39", color = NA),
+    strip.background = element_rect(fill = "#0b1e39", color = NA),
+    strip.text       = element_text(color = "white", face = "bold"),
+    plot.title       = element_text(color = "white", hjust = 0.5),
+    axis.title       = element_text(color = "white"),
+    axis.text        = element_text(color = "white"),
+    panel.grid.major = element_line(color = "gray50", linewidth = 0.3)
+  )
+```
+
+These plots show the *Seasonal and Trend Decomposition using Loess* whuch breaks the data into its *Seasonal*, *Trend*, and *Remainder/Residual* components using *Loess Smoothing*.
+
+* The `data` shows high variance with strong oscillations
+* There is a clear, repeating `seasonal` pattern (daily cycles)
+* A `trend` showing slow variation with event-driven dips e.g.: holidays
+* The `remainder` centers around $0$, meaning the $w_t$ term is not very strong/relevant, so most of our traffic volume information can be captured in the data
+
+```{r nonlinearity[16], fig.width=14, fig.height=5, echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+# nonlinearity
+fit_lm <- lm(traffic_volume ~ hour(toll_timestamp) + wday(toll_timestamp), data = data)
+
+
+acf_obj <- acf(residuals(fit_lm), lag.max = 48, plot = FALSE)
+
+acf_df <- data.frame(
+  lag = as.numeric(acf_obj$lag[-1]),
+  acf = as.numeric(acf_obj$acf[-1])
+)
+
+ci <- qnorm(0.975) / sqrt(length(residuals(fit_lm)))
+
+ggplot(acf_df, aes(x = lag, y = acf)) +
+  geom_hline(yintercept = 0, color = "gray70") +
+  geom_linerange(
+    aes(ymin = 0, ymax = acf),
+    color = "#F1948A",
+    linewidth = 0.9
+  ) +
+  geom_hline(
+    yintercept = c(-ci, ci),
+    linetype = "dashed",
+    color = "gray60"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background  = element_rect(fill = "#0b1e39", color = NA),
+    panel.background = element_rect(fill = "#0b1e39", color = NA),
+    plot.title       = element_text(color = "white", hjust = 0.5),
+    axis.title       = element_text(color = "white"),
+    axis.text        = element_text(color = "white"),
+    panel.grid.major = element_line(color = "gray50", linewidth = 0.3)
+  ) +
+  labs(
+    title = "ACF of Residuals",
+    x = "Lag",
+    y = "Autocorrelation"
+  )
+```
+
+Fitting a simple linear model and plotting the **ACF** of the residuals, we see that the data is heavily autocorrelated. More simply, traffic today is determined by traffic yesterday.
+
+```{r arch_test[17], fig.width=14, fig.height=5,echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+## squared returns
+returns <- diff(log(data$traffic_volume))
+returns <- returns[is.finite(returns)]
+# ACF of squared returns
+acf_obj <- acf(returns^2, plot = FALSE)
+
+acf_df <- data.frame(
+  lag = as.numeric(acf_obj$lag[-1]),
+  acf = as.numeric(acf_obj$acf[-1])
+)
+
+ci <- qnorm(0.975) / sqrt(length(returns))
+
+ggplot(acf_df, aes(x = lag, y = acf)) +
+  geom_hline(yintercept = 0, color = "gray70") +
+  geom_linerange(
+    aes(ymin = 0, ymax = acf),
+    color = "#F1948A",
+    linewidth = 0.8
+  ) +
+  geom_hline(
+    yintercept = c(-ci, ci),
+    linetype = "dashed",
+    color = "gray60"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.background  = element_rect(fill = "#0b1e39", color = NA),
+    panel.background = element_rect(fill = "#0b1e39", color = NA),
+    plot.title       = element_text(color = "white", hjust = 0.5),
+    axis.title       = element_text(color = "white"),
+    axis.text        = element_text(color = "white"),
+    panel.grid.major = element_line(color = "gray50", linewidth = 0.3)
+  ) +
+  labs(
+    title = "ACF of Squared Returns",
+    x = "Lag",
+    y = "Autocorrelation"
+  )
+
+# arch test
+FinTS::ArchTest(returns, lags = 24)
+```
+
+This final test checks to see if there is any **ARCH** component, e.g.: is the volatility/variance autocorrelated with past events?
+
+This test shows that, no, it is not.
+
+## Model Selection
+
+The data shows regular, daily cycles of traffic. The regularity along with the short-term nature of these cycles makes a model such as the *Long Short-Term Memory* Neural Net model, or **LSTM** a good choice.
+
+This model thrives on finding short-term information from TimeSeries with multiple seasonalities and nonlinear dynamics. The fact that the white noise term is minimal is also a boon to this model.
+
+**LSTM** learns the temporal dependencies without needing to specify the important lags or when to "forget" previous data. This makes it the ideal model for data with this type of daily nature.
+
+# LSTM Model Architecture
+
+Below is the basic model architecture to *LSTM*.
+
+The images and most of the descriptions/definitions come from the lecture slides from my **STA 9701 -- Time Series** class.
+
+<div class="center-image" style="text-align: center;">
+![Basic LSTM Structure, via STA 9701 Lecture Notes](images/ts2/lstm.png)
+</div>
+
+Breaking down each component of this:
+
+* $A$: This is an **LSTM** cell which is one set of $equations \space + \space weights$
+
+* $x_t$: The input TimeSeries data
+
+* $h_t$: The hidden state, a fully updated "summary" of what the model is thinking at each stage of the process
+
+* $\sigma$: These are stand-ins for the various *gates* the **LSTM** model uses in determining what to bring forward and what to forget
+
+The *cell-state* $c_t$ is partially updated at every stage through gate activations $\sigma(\cdot)$.
+
+Each gate outputs an *importance weight* from $[0,1]$ for each entry, which modifies the corresponding entry of $c_t$.
+
+<div class="center-image" style="text-align: center;">
+![LSTM Forget Gate, via STA 9701 Lecture Notes](images/ts2/lstm2.png)
+</div>
+
+
+A *forget gate* $f_t$ then outputs how much of the previous *cell-state memory* $c_{t-1}$ to forget.
+
+This gate's formula is:
+
+$f_t=\sigma(W_f \times [h_{t-1},x_t] + b_f)$
+
+If $f_t(i) \rightarrow 0$ then $c_{t-1} \odot f_t$ -- the component is forgotten.
+
+If $f_t(i) \rightarrow 1$ then $c_t(i) \approx c_{t-1}(i)$ -- the component is retained.
+
+Once the *forget gate* check occurs, the new information is passed through an *input gate* $i_t$ which determines how much of the new data is retained by the memory cell.
+
+It takes the useful information from $X_t$ to create the *candidate memory* $\tilde{c}_t$.
+
+This memory is created via an *input gate* with the formula:
+
+$i_t = \sigma(W_i \times [h_{t-1},x_t] + b_i)$
+
+<div class="center-image" style="text-align: center;">
+![LSTM Input Gate, via STA 9701 Lecture Notes](images/ts2/lstm3.png)
+</div>
+
+Similar to the *forget gate*, if $i_t(j) \rightarrow 1$ then the candidate information $\tilde{c}_t(j)$ is used.
+
+Circling back to the *cell-state*, its formula can be re-written as:
+
+$c_t=f_t \odot c_{t-1} + i_t \odot \tilde{c}_t$
+
+* $f_t$: Forget gate (keep or don't keep info)
+
+* $i_t$: Input gate (how much info to keep)
+
+* $f_t \odot c_{t-1}$: Remove useless info from previous memory
+
+* $i_t \odot \tilde{c}_t$: Add selected new information from current input
+
+<div class="center-image" style="text-align: center;">
+![LSTM Memory Update, via STA 9701 Lecture Notes](images/ts2/lstm4.png)
+</div>
+
+The final component is the *output gate* $o_t$ which determines which parts of the memory contribute to the next *hidden state* $h_{t+1}$.
+
+Each *hidden state*'s formula can therefore be written as:
+
+$h_t = o_t \odot tanh(c_t)$
+
+Where $tanh(c_t)$ is a nonlinear, hyperbolic tangent transformation of all past information, e.g.: it transforms the output to be between $[-1,1]$
+
+As with the *forget gate* and *input gate*, for the *output gate*, $o_t(j) \rightarrow 1$ then $tanh(c_t(j))$ is important and will influence $h_t$.
+
+<div class="center-image" style="text-align: center;">
+![LSTM Output Gate, via STA 9701 Lecture Notes](images/ts2/lstm5.png)
+</div>
+
+The formula for the output gate is $o_t=\sigma(W_o[h_{t-1},x_t]+b_o)$
+
+## The Fun Part
+
+With the math and logic of how the model works out of the way, knowing the data should fit this structure well, it's time to get to the good stuff.
+
+To reiterate, the data only looks at `Detection Region == 'Brooklyn'` and spans from `2025-01-05 00:00:00` to `2025-11-22 23:30:00` at half-hour intervals.
+
+Because the necessary `Keras` and `TensorFlow` packages just work a lot better in `Python`, that will be the language of choice for this model.
+
+```{python setup[18],echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+import numpy as np
+import pandas as pd
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+
+import tensorflow as tf
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.callbacks import EarlyStopping
+
+import matplotlib.pyplot as plt
+
+# read in data
+data = pd.read_csv('data/TS2/mdl_data.csv',index_col=None)
+
+data = data.sort_values("toll_timestamp").reset_index(drop=True)
+
+data["toll_timestamp"] = pd.to_datetime(data["toll_timestamp"], errors="raise")
+
+data["toll_timestamp"] = pd.to_datetime(data["toll_timestamp"])
+data = data.sort_values("toll_timestamp").reset_index(drop=True)
+
+y = data[["traffic_volume"]].astype(float).values
+
+scaler = StandardScaler()
+y_scaled = scaler.fit_transform(y).astype(np.float32)
+```
+
+The following function will perform the LSTM `LOOKBACK` functionality:
+
+```{python lookback_function[19],echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: false
+def make_sequences(arr_2d, lookback: int):
+    """
+    arr_2d: shape (n, 1) for univariate series
+    returns:
+      X: (n-lookback, lookback, 1)
+      y: (n-lookback, 1)
+    """
+    n = arr_2d.shape[0]
+    X = np.zeros((n - lookback, lookback, arr_2d.shape[1]), dtype=np.float32)
+    y = np.zeros((n - lookback, arr_2d.shape[1]), dtype=np.float32)
+
+    for i in range(n - lookback):
+        X[i] = arr_2d[i:i + lookback]
+        y[i] = arr_2d[i + lookback]
+    return X, y
+
+LOOKBACK = 48  # 48 half-hours = 24 hours
+X, y_next = make_sequences(y_scaled, LOOKBACK)
+```
+
+Next, split the data for modeling.
+
+```{python tt-split[20],echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: false
+
+split = int(0.8 * len(X))
+
+X_train, X_val = X[:split], X[split:]
+y_train, y_val = y_next[:split], y_next[split:]
+```
+
+Finally, build and train the **LSTM** model. As with most Neural Net models, it will train in epochs where it passes through the training data at most 100 times while learning using gradient descent, minimizing loss with `EarlyStopping` set to $10$, meaning if it doesn't improve at all after 10 iterations, it stops training.
+
+```{python lstm[21],echo=FALSE, message=FALSE, warning=FALSE}
+#| code-fold: false
+#| echo: false
+#| output: false
+#| warning: false
+#| error: false
+tf.keras.backend.clear_session()
+tf.random.set_seed(42)
+np.random.seed(42)
+
+model = Sequential([
+    LSTM(64, input_shape=(LOOKBACK, 1)),
+    Dense(1)
+])
+
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+    loss="mse"
+)
+
+early_stop = EarlyStopping(
+    monitor="val_loss",
+    patience=10,
+    restore_best_weights=True
+)
+
+history = model.fit(
+    X_train, y_train,
+    validation_data=(X_val, y_val),
+    epochs=100,
+    batch_size=32,
+    callbacks=[early_stop],
+    verbose=1
+)
+```
+
+Testing the predictions on the validation set:
+
+```{python predict[22], fig.width=14, fig.height=5,echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+#| echo: false
+#| output: false
+#| warning: false
+#| error: false
+y_pred_val = model.predict(X_val)
+
+y_val_orig  = scaler.inverse_transform(y_val)
+y_pred_orig = scaler.inverse_transform(y_pred_val)
+
+rmse = np.sqrt(mean_squared_error(y_val_orig, y_pred_orig))
+mae  = mean_absolute_error(y_val_orig, y_pred_orig)
+
+print(f"Validation RMSE: {rmse:,.2f}")
+print(f"Validation MAE : {mae:,.2f}")
+```
+
+Finally, plotting the results:
+
+```{python plot_predict[23], fig.width=14, fig.height=5,echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: true
+plt.figure(figsize=(12, 5))
+
+plt.gcf().patch.set_facecolor("#0b1e39")
+plt.gca().set_facecolor("#0b1e39")
+
+plt.plot(
+    y_val_orig[:500],
+    label="Actual",
+    color="#F1948A",
+    linewidth=2
+)
+plt.plot(
+    y_pred_orig[:500],
+    label="Predicted",
+    color="#85C1E9",
+    linewidth=2,
+    linestyle="--"
+)
+
+plt.title(
+    "LSTM 1-step Forecast (first 500 validation points)",
+    color="white",
+    fontsize=14,
+    fontweight="bold"
+)
+plt.xlabel("Validation index", color="white")
+plt.ylabel("Traffic volume", color="white")
+
+plt.tick_params(colors="white")
+
+plt.grid(which="major", color="gray", linewidth=0.3)
+plt.minorticks_on()
+plt.grid(which="minor", color="gray", linewidth=0.2)
+
+leg = plt.legend()
+for t in leg.get_texts():
+    t.set_color("gray")
+
+# Remove spines
+for spine in plt.gca().spines.values():
+    spine.set_visible(False)
+
+plt.tight_layout()
+plt.show()
+```
+
+We can see the actual vs predicted are pretty close to each other. The $MSE \approx 172.3$ and $MAE \approx 120.0$.
+
+```{python mae[24],echo=TRUE, message=FALSE, warning=FALSE}
+#| code-fold: false
+
+mean_volume = data["traffic_volume"].mean()
+print("RMSE % of Mean:", round(rmse / mean_volume,3) * 100)
+print("MAE % of Mean:", round(mae / mean_volume,3) * 100)
+```
+
+The **MAE** is less than $5\%$ of the mean. This shows really good predictive power from the model.
+
+# Conclusion and Next Steps
+
+An **LSTM** model is really good at finding the general structure of Manhattan traffic coming into the **CBD** from the Brooklyn `Detection Region`. Its error terms are really small and we can just visually see from the output graph that the `Actual` follows the `Predicted` very closely.
+
+Here are several ways to continue this project:
+
+* Hyperparameter tuning
+* Expanding the region to include all of the *Central Business District*
+    - Either individually or as a whole
+* Streamlit deployment of live up-to-the-week traffic pattern predictions

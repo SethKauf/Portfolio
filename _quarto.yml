@@ -26,7 +26,7 @@ website:
           - text: "Conditional Probability Problem"
             href: Applied_Probability_Die_Roll.qmd
           - text: "Congestion Pricing Time Series Analysis"
-            href: Congestion_Pricing_TS1.qmd
+            href: Congestion_Pricing_TS2.qmd
           - text: "Electoral College Analysis"
             href: Electoral_Process.qmd
           - text: "Home Pricing Prediction Competition"
@@ -41,3 +41,5 @@ format:
 
 editor:
   mode: source
+
+python: C:/Users/sethk/anaconda3/envs/lstm/python.exe
