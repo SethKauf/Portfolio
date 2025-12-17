@@ -16,7 +16,7 @@ if (interactive()) py_config()
 ```
 # Introduction
 
-On January 5, 2025, New York City's [Congestion Pricing Program](https://www.nytimes.com/2025/01/04/nyregion/congestion-pricing-nyc.html) went into effect, where vehicles would be tolled for entering Manhattan's *Congestion Relief Zone* (**CRZ**) with a vehicle. This toll is \$9 during peak period (5AM to 9PM on weekdays) and \$2.25 otherwise. The debates over congestion pricing, its enacting and its merits are still ongoing today, the fact remains it's currently in place, with plans to gradually increase the tolls over the next 6 years until it caps out at \$15 in 2031.[^mta]:
+On January 5, 2025, New York City's [Congestion Pricing Program](https://www.nytimes.com/2025/01/04/nyregion/congestion-pricing-nyc.html) went into effect, where vehicles would be tolled for entering Manhattan's *Congestion Relief Zone* (**CRZ**). This toll is \$9 during peak period (5AM to 9PM on weekdays) and \$2.25 otherwise. The debates over congestion pricing, its enacting and its merits are still ongoing today, the fact remains it's currently in place, with plans to gradually increase the tolls over the next 6 years until it caps out at \$15 in 2031.[^mta]:
 
 [^mta]: [MTA Congestion Pricing Plan](https://congestionreliefzone.mta.info/tolling)
 
@@ -184,6 +184,16 @@ leaflet() |>
 If you've visited this page before, you might have noticed that this is my second attempt at this project. The first used [NYC DOT Automated Traffic Volume Counts](https://data.cityofnewyork.us/Transportation/Automated-Traffic-Volume-Counts/7ym2-wayt/about_data) from **NYC Open Data**. The goal was to see if there was a noticeable shift in traffic volume since Congestion Pricing's implementation, especially at the *peak* times. Unfortunately, this data is extremely sparse (multiple gaps of 200+ days) and had at least several severe errors, including severely mislabeled data (e.g.: traffic volume counts dated a month in the future for a sensor in Brooklyn). I submitted a note to NYC Open Data about this on or around October 27, 2025. As of writing on December 13, 2025, I have not received a response.
 
 Looking on the NYC Open Portal site and checking the data today, the Metadata's last update was December 9, 2025 while the data itself hasn't been updated since September 20, 2025. The data that had been in error in the past still had the same values (specifically DeKalb Avenue on December 9th).
+
+## Project Objective
+
+For this project, I'll be analyzing and modeling `Traffic Volume` in the *Central Business District* or **CBD** since *Congestion Pricing* took effect.
+
+Using a Neural-Network model, *Long Short-Term Memory* or **LSTM**, I will model short-windows of traffic volume to try and predict what traffic in the **CBD** will look like in the near-future, coming from the `Detection Region` of `Brooklyn`.
+
+If the model is trained well enough, I will deploy it to a *Streamlit* dashboard to order to have live predictions about traffic data in the near-future from whatever date the dashboard is accessed.
+
+This project's stretch goal will also be able to model all the different `Detection Group` on this deployable dashboard, so users can ask questions such as "if I want to enter Manhattan at 7am on December 20th from Brooklyn, is it better to by using the Brooklyn Bridge, the Manhattan Bridge, the Williamsburg Bridge, etc.?"
 
 ## Dataset
 For this project I used New York Metropolitan Transportation Authority (**MTA**) data on New York State's Open Data Portal: [MTA Congestion Relief Zone Vehicle Entries: Beginning 2025](https://data.ny.gov/Transportation/MTA-Congestion-Relief-Zone-Vehicle-Entries-Beginni/t6yz-b64h/about_data).
@@ -660,7 +670,7 @@ data |>
   group_by(hour) |>
   summarize(mean_volume = mean(traffic_volume)) |>
   ggplot(aes(hour, mean_volume)) +
-  geom_line(color='#F1948A') +
+  geom_line(color='#F1948A',lwd=2) +
   labs(title = "Average Traffic Volume by Hour of Day",
        y = "Mean Traffic Volume") +
   theme_minimal(base_size = 14) +
