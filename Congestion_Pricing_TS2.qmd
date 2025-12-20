@@ -1260,6 +1260,12 @@ print("MAE % of Mean:", round(mae / mean_volume,3) * 100)
 
 The **MAE** is less than $5\%$ of the mean. This shows really good predictive power from the model.
 
+# Dashboard
+
+I've staged a dashboard using *Streamlit* to try and give predictions for the [upcoming week of traffic data](https://sethkauf-congestion-traffic-dashboard.streamlit.app/).
+
+It's still very much a work-in-progress, but maybe it can help on someone's morning commute.
+
 # Conclusion and Next Steps
 
 An **LSTM** model is really good at finding the general structure of Manhattan traffic coming into the **CBD** from the Brooklyn `Detection Region`. Its error terms are really small and we can just visually see from the output graph that the `Actual` follows the `Predicted` very closely.
