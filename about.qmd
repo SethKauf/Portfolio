@@ -6,7 +6,7 @@ jyml:
 
 Hi, I'm Seth Kaufman, a data scientist living in New York.
 
-I'm currently completing my Master's degree in Statistics with a Data Science focus at Zicklin School of Business at Baruch College.
+In December 2025, I completed my M.S. in Statistics at the Zicklin School of Business at CUNY Baruch.
 
 ```{r Baruch_Map[0], echo=FALSE, message=FALSE, warning=FALSE}
 #| echo: false
@@ -26,7 +26,7 @@ leaflet() |>
   addTiles() |>
   setView(baruch_longitude, baruch_latitude, zoom=17) |>
   addPopups(baruch_longitude, baruch_latitude, 
-            "I am a Master's student at <b>Baruch College</b>!")
+            "I am a former Master's student at <b>Baruch College</b>!")
 ```
 
 I've always had a love for computers and math, so marrying the two as a data scientist was a no-brainer for me, though it took me a bit to get here.
