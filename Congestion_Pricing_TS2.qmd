@@ -38,13 +38,12 @@ Below is a general map of the **CRZ**, though it does not exclude the MTA's excl
 #if (!require("leaflet")) install.packages("leaflet")
 #if (!require("sf")) install.packages("sf")
 #if (!require("tigris")) install.packages("tigris")
-
-
-
 library(dplyr)
 library(leaflet)
 library(sf)
 library(tigris)
+
+carto_api_key <- Sys.getenv("CARTO_API_KEY")
 
 
 options(tigris_use_cache = TRUE)
@@ -165,18 +164,52 @@ below_60  <- st_transform(below_60_rot, 4326)
 bb2 <- st_bbox(below_60)
 
 # Leaflet overlay
+#leaflet() |>
+#  addProviderTiles(providers$CartoDB.Positron) |>
+#  addPolygons(data = manhattan_main, fill = FALSE,
+#              color = "black", weight = 2, opacity = 0.8) |>
+#  # excess code adds another line
+#  #addPolylines(data = cut_line2, color = "forestgreen",
+#   #            weight = 3, opacity = 0.9) |>
+#  addPolygons(data = below_60,
+#              fillColor = "darkblue", fillOpacity = 0.25,
+#              color = "forestgreen", weight = 2) |>
+#  fitBounds(bb2[["xmin"]], bb2[["ymin"]],
+#            bb2[["xmax"]], bb2[["ymax"]])
+
+# CARTO Positron tile URL
+carto_tiles <- paste0(
+  "https://basemaps.cartocdn.com/",
+  "rastertiles/light_all/{z}/{x}/{y}.png",
+  "?key=", carto_api_key
+)
+
+# Leaflet map
 leaflet() |>
-  addProviderTiles(providers$CartoDB.Positron) |>
-  addPolygons(data = manhattan_main, fill = FALSE,
-              color = "black", weight = 2, opacity = 0.8) |>
-  # excess code adds another line
-  #addPolylines(data = cut_line2, color = "forestgreen",
-   #            weight = 3, opacity = 0.9) |>
-  addPolygons(data = below_60,
-              fillColor = "darkblue", fillOpacity = 0.25,
-              color = "forestgreen", weight = 2) |>
-  fitBounds(bb2[["xmin"]], bb2[["ymin"]],
-            bb2[["xmax"]], bb2[["ymax"]])
+  addTiles(
+    urlTemplate = carto_tiles,
+    attribution = "&copy; OpenStreetMap contributors &copy; CARTO"
+  ) |>
+  addPolygons(
+    data = manhattan_main,
+    fill = FALSE,
+    color = "black",
+    weight = 2,
+    opacity = 0.8
+  ) |>
+  addPolygons(
+    data = below_60,
+    fillColor = "darkblue",
+    fillOpacity = 0.25,
+    color = "forestgreen",
+    weight = 2
+  ) |>
+  fitBounds(
+    bb2[["xmin"]],
+    bb2[["ymin"]],
+    bb2[["xmax"]],
+    bb2[["ymax"]]
+  )
 ```
 
 ## Note
@@ -1276,3 +1309,6 @@ Here are several ways to continue this project:
 * Expanding the region to include all of the *Central Business District*
     - Either individually or as a whole
 * Streamlit deployment of live up-to-the-week traffic pattern predictions
+
+# Update 2026-July
+I've been working through this dashboard to make an interactive Streamlit map with live `MCP` calls on the data to provide up-to-the-hour predictions

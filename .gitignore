@@ -15,5 +15,6 @@ data/**
 .Rhistory
 /.quarto/*
 **/gganim*
+.Renviron
 
 /.quarto/
